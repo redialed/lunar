@@ -10,6 +10,12 @@ router.get('/api/v1/si/fetch_headers', (req, res) => {
     });
 });
 
+router.get('/api/v1/direct_share/recent_recipients', (req, res) => {
+    res.json({
+        "status": "ok"
+    });
+});
+
 router.use((req, res) => {
     res.status(400).json({
         message: "Not implemented yet.",

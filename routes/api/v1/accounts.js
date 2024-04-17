@@ -44,20 +44,22 @@ router.post("/login", async (req, res) => {
       const saltedPassword = token + password + token;
   
       if (await bcrypt.compare(saltedPassword, hashedPassword)) {
-        // Generate session ID
         const sessionID = Math.random().toString(36).substring(2);
-  
-        // Update session ID in the database
+
         await User.updateOne({ username }, { sessionID });
-  
-        // Construct response object
+
+        const id = user._id.toString().replace(/j%3A%22/g, "").replace(/%22/g, "");
+
+        res.cookie("sessionid", sessionID, { maxAge: 30 * 24 * 60 * 60 * 1000 });
+        res.cookie("ds_user_id", id, { maxAge: 30 * 24 * 60 * 60 * 1000 });
+
         const response = {
             logged_in_user: {
               pk: user._id,
               username: user.username,
               is_verified: user.verified,
               profile_pic_id: user._id,
-              profile_pic_url: "/ign/icon.png",
+              profile_pic_url: user.profilePicture,
               is_private: user.isaccountprivate,
               pk_id: user._id,
               full_name: user.fullname,
@@ -94,7 +96,7 @@ router.post("/login", async (req, res) => {
               phone_number: "",
             },
             session_flush_nonce: null,
-            token: null,
+            token: "thisisatoken",
             auth_token: null,
             status: "ok",
           };
@@ -155,7 +157,7 @@ router.post("/create", upload.none(), async (req, res) => {
         password: hashedPassword,
         uniqueToken: token,
         deviceID,
-        sessionID: "default",
+        sessionID: null,
         private: false,
         verified: false,
         followerCount: 0,
@@ -185,6 +187,139 @@ router.post("/username_suggestions", async (req, res) => {
         username_suggestions: [],
         status: "ok",
     });
+});
+
+router.get("/current_user", async (req, res) => {
+    try {
+        const accountId = req.cookies.ds_user_id;
+        const user = await User.findOne({ _id: accountId }).exec();
+
+      
+        // Verify if user is authenticated using the cookie sessionid and verify if the sessionid is valid
+        if (!req.cookies.sessionid || !user || req.cookies.sessionid !== user.sessionID) {
+            return res.status(400).json({
+                message: "Invalid session ID",
+                status: "fail",
+                error_type: "generic_request_error",
+            });
+        }
+
+
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found!",
+          status: "fail",
+          error_type: "error",
+        });
+      }
+    
+      const response = {
+        user: {
+          biography: user.biography,
+          primary_profile_link_type: 0,
+          show_fb_link_on_profile: false,
+          show_fb_page_link_on_profile: false,
+          can_hide_category: true,
+          smb_support_partner: null,
+          can_add_fb_group_link_on_profile: false,
+          is_quiet_mode_enabled: false,
+          last_seen_timezone: "",
+          account_category: "",
+          allowed_commenter_type: "any",
+          fbid_v2: "0",
+          full_name: user.fullname,
+          gender: 3,
+          is_hide_more_comment_enabled: false,
+          is_muted_words_custom_enabled: false,
+          is_muted_words_global_enabled: false,
+          is_muted_words_spamscam_enabled: false,
+          is_private: user.private,
+          has_nme_badge: false,
+          pk: user._id,
+          pk_id: user._id,
+          reel_auto_archive: "on",
+          show_ig_app_switcher_badge: true,
+          strong_id__: user._id,
+          external_url: user.website,
+          category: null,
+          is_category_tappable: false,
+          is_business: false,
+          professional_conversion_suggested_account_type: 2,
+          account_type: 1,
+          displayed_action_button_partner: null,
+          smb_delivery_partner: null,
+          smb_support_delivery_partner: null,
+          displayed_action_button_type: null,
+          is_call_to_action_enabled: null,
+          num_of_admined_pages: null,
+          page_id: null,
+          page_name: null,
+          ads_page_id: null,
+          ads_page_name: null,
+          bio_links: [],
+          account_badges: [],
+          all_media_count: 0,
+          birthday_today_visibility_for_viewer: "NOT_VISIBLE",
+          email: "jon@doe.cs",
+          has_anonymous_profile_picture: false,
+          hd_profile_pic_url_info: {
+            url: "",
+            width: 1080,
+            height: 1080,
+          },
+          hd_profile_pic_versions: [
+            {
+              width: 320,
+              height: 320,
+              url: user.profilePicture,
+            },
+            {
+              width: 640,
+              height: 640,
+              url: user.profilePicture,
+            },
+          ],
+          interop_messaging_user_fbid: 17846310074577960,
+          is_mv4b_biz_asset_profile_locked: false,
+          has_legacy_bb_pending_profile_picture_update: false,
+          is_showing_birthday_selfie: false,
+          is_supervision_features_enabled: false,
+          is_verified: user.verified,
+          liked_clips_count: 0,
+          has_active_mv4b_application: false,
+          phone_number: "",
+          profile_pic_id: "1",
+          profile_pic_url: user.profilePicture,
+          profile_edit_params: {
+            username: {
+              should_show_confirmation_dialog: false,
+              is_pending_review: false,
+              confirmation_dialog_text:
+                "Because your account reaches a lot of people, your username change may need to be reviewed. If so, you'll be notified when we've reviewed it. If not, your username will change immediately.",
+              disclaimer_text: "",
+            },
+            full_name: {
+              should_show_confirmation_dialog: false,
+              is_pending_review: false,
+              confirmation_dialog_text:
+                "Because your account is verified, your name change may need to be reviewed. If so, you'll be notified when we've reviewed it. If not, your name will change immediately.",
+              disclaimer_text: "",
+            },
+          },
+          show_conversion_edit_entry: false,
+          show_together_pog: false,
+          trusted_username: user.username,
+          trust_days: 0,
+          username: user.username,
+        },
+        status: "ok",
+      };
+    
+      res.json(response);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Internal Server Error", status: "fail" });
+    }
 });
 
 module.exports = router;
