@@ -10,7 +10,7 @@ router.get("/user/:id", async (req, res) => {
     const sessionID = req.cookies.sessionid;
 
     // Ensure user is authenticated
-    const user = await User.findOne({ _id: accountId, sessionID }).exec();
+    const user = await User.findOne({ userID: accountId, sessionID }).exec();
     if (!user) {
       return res.status(401).json({
         message: "Unauthorized",
@@ -22,7 +22,7 @@ router.get("/user/:id", async (req, res) => {
     const id = req.params.id;
 
     // Retrieve username based on ID
-    const idUser = await User.findById(id).exec();
+    const idUser = await User.findOne({ userID: id }).exec();
     if (!idUser) {
       return res.status(404).json({
         message: "User not found",
@@ -200,7 +200,7 @@ router.get("/timeline", async (req, res) => {
       return res.status(403).json({ message: "Not allowed!" });
     }
 
-    const account = await User.findOne({ _id: ds_user_id });
+    const account = await User.findOne({ userID: ds_user_id });
     if (!account) {
       return res.status(404).json({ message: "Account not found" });
     }

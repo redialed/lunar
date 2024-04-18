@@ -54,7 +54,7 @@ router.post("/check_email", upload.none(), async (req, res) => {
 router.get("/:id/info", async (req, res) => {
   try {
     const id = req.params.id;
-    const user = await User.findOne({ _id: id }).exec();
+    const user = await User.findOne({ userID: id }).exec();
 
     if (!user) {
       return res.status(404).json({
@@ -66,14 +66,14 @@ router.get("/:id/info", async (req, res) => {
 
     const response = {
       user: {
-        pk: user._id,
+        pk: user.userID,
         username: user.username,
         follow_friction_type: 0,
         is_verified: user.verified,
         profile_pic_id: "2577010241112975910_47422889959",
         profile_pic_url: user.profilePicture,
         full_name: user.fullname,
-        pk_id: user._id,
+        pk_id: user.userID,
         is_private: user.private,
         account_badges: [],
         has_anonymous_profile_picture: false,

@@ -49,30 +49,27 @@ router.post("/login", async (req, res) => {
 
       await User.updateOne({ username }, { sessionID });
 
-      const id = user._id
-        .toString()
-        .replace(/j%3A%22/g, "")
-        .replace(/%22/g, "");
+      const id = user.userID;
 
       res.cookie("sessionid", sessionID, { maxAge: 30 * 24 * 60 * 60 * 1000 });
       res.cookie("ds_user_id", id, { maxAge: 30 * 24 * 60 * 60 * 1000 });
 
       const response = {
         logged_in_user: {
-          pk: user._id,
+          pk: user.userID,
           username: user.username,
           is_verified: user.verified,
-          profile_pic_id: user._id,
+          profile_pic_id: user.userID,
           profile_pic_url: user.profilePicture,
           is_private: user.isaccountprivate,
-          pk_id: user._id,
+          pk_id: user.userID,
           full_name: user.fullname,
           account_badges: [],
           has_anonymous_profile_picture: false,
           is_supervision_features_enabled: false,
           all_media_count: 0,
           liked_clips_count: 0,
-          fbid_v2: user._id,
+          fbid_v2: user.userID,
           interop_messaging_user_fbid: 0,
           is_using_unified_inbox_for_direct: false,
           biz_user_inbox_state: 0,
@@ -100,7 +97,7 @@ router.post("/login", async (req, res) => {
           phone_number: "",
         },
         session_flush_nonce: null,
-        token: "thisisatoken",
+        token: null,
         auth_token: null,
         status: "ok",
       };
@@ -136,6 +133,7 @@ router.post("/create", upload.none(), async (req, res) => {
   const decodedJson = JSON.parse(sentJson);
 
   const username = decodedJson.username.toLowerCase();
+  const email = decodedJson.email;
   const password = decodedJson.password;
   const deviceID = decodedJson.device_id;
 
@@ -152,16 +150,28 @@ router.post("/create", upload.none(), async (req, res) => {
       });
     }
 
+    function generateUserId() {
+      const min = 1000000000;
+      const max = 9999999999;
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    // Example usage
+    const userID = generateUserId();
+    console.log(userID);
+
     const token = Math.floor(Math.random() * 2147483647); // Random token
     const hashedPassword = await bcrypt.hash(token + password + token, 10);
 
     // Create new user
     const newUser = new User({
+      userID,
+      email,
       username,
       password: hashedPassword,
       uniqueToken: token,
       deviceID,
-      sessionID: null,
+      sessionID: "",
       private: false,
       verified: false,
       followerCount: 0,
@@ -198,7 +208,7 @@ router.post("/username_suggestions", async (req, res) => {
 router.get("/current_user", async (req, res) => {
   try {
     const accountId = req.cookies.ds_user_id;
-    const user = await User.findOne({ _id: accountId }).exec();
+    const user = await User.findOne({ userID: accountId }).exec();
 
     // Verify if user is authenticated using the cookie sessionid and verify if the sessionid is valid
     if (
@@ -243,11 +253,11 @@ router.get("/current_user", async (req, res) => {
         is_muted_words_spamscam_enabled: false,
         is_private: user.private,
         has_nme_badge: false,
-        pk: user._id,
-        pk_id: user._id,
+        pk: user.userID,
+        pk_id: user.userID,
         reel_auto_archive: "on",
         show_ig_app_switcher_badge: true,
-        strong_id__: user._id,
+        strong_id__: user.userID,
         external_url: user.website,
         category: null,
         is_category_tappable: false,
