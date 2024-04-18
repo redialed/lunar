@@ -2,6 +2,7 @@ const express = require("express");
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 const mongoose = require("mongoose");
+const fs = require("fs");
 
 const app = express();
 const port = 3000;
@@ -23,6 +24,15 @@ db.once("open", () => {
 
 app.use("/public", express.static(__dirname + '/public'));
 app.use(require("./routes"));
+
+
+if (!fs.existsSync("public/photos")) {
+  fs.mkdirSync("public/photos", { recursive: true });
+}
+
+if (!fs.existsSync("public/profilePictures")) {
+  fs.mkdirSync("public/profilePictures", { recursive: true });
+}
 
 app.get("/api/v2/status", (req, res) => {
   res.send("Oldgram API is running!");

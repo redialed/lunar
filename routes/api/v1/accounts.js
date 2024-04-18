@@ -2,6 +2,8 @@ const express = require("express");
 const multer = require("multer");
 const router = express.Router();
 const bcrypt = require("bcrypt");
+const sharp = require('sharp');
+const config = require("../../../config");
 
 const User = require("../../../models/User");
 
@@ -221,28 +223,27 @@ router.post("/username_suggestions", async (req, res) => {
 router.get("/current_user", async (req, res) => {
   try {
     const accountId = req.cookies.ds_user_id;
+    const sessionID = req.cookies.sessionid;
+
+    if (!accountId || !sessionID) {
+      return res.status(401).json({
+        message: "Unauthorized",
+        status: "fail",
+        error_type: "authentication",
+      });
+    }
+
+    // Ensure user is authenticated
+    const userAuth = await User.findOne({ userID: accountId, sessionID }).exec();
+    if (!userAuth) {
+      return res.status(401).json({
+        message: "Unauthorized",
+        status: "fail",
+        error_type: "authentication",
+      });
+    }
+
     const user = await User.findOne({ userID: accountId }).exec();
-
-    // Verify if user is authenticated using the cookie sessionid and verify if the sessionid is valid
-    if (
-      !req.cookies.sessionid ||
-      !user ||
-      req.cookies.sessionid !== user.sessionID
-    ) {
-      return res.status(400).json({
-        message: "Invalid session ID",
-        status: "fail",
-        error_type: "generic_request_error",
-      });
-    }
-
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found!",
-        status: "fail",
-        error_type: "error",
-      });
-    }
 
     const response = {
       user: {
@@ -356,24 +357,27 @@ router.get("/current_user", async (req, res) => {
 router.post("/edit_profile", async (req, res) => {
   try {
     const accountId = req.cookies.ds_user_id;
-    const user = await User.findOne({ userID: accountId }).exec();
+    const sessionID = req.cookies.sessionid;
 
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found!",
-        status: "fail",
-        error_type: "error",
-      });
-    }
-
-    // Verify if user is authenticated using the cookie sessionid and verify if the sessionid is valid
-    if (user.sessionID !== req.cookies.sessionid || !req.cookies.sessionid) {
+    if (!accountId || !sessionID) {
       return res.status(401).json({
         message: "Unauthorized",
         status: "fail",
         error_type: "authentication",
       });
     }
+
+    // Ensure user is authenticated
+    const userAuth = await User.findOne({ userID: accountId, sessionID }).exec();
+    if (!userAuth) {
+      return res.status(401).json({
+        message: "Unauthorized",
+        status: "fail",
+        error_type: "authentication",
+      });
+    }
+
+    const user = await User.findOne({ userID: accountId }).exec();
 
     const signedBody = req.body.signed_body;
     if (!signedBody) {
@@ -449,6 +453,88 @@ router.post("/edit_profile", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Internal Server Error", status: "fail" });
+  }
+});
+
+router.post('/change_profile_picture', upload.single('profile_pic'), async (req, res) => {
+  try {
+      const { ds_user_id, sessionid } = req.cookies;
+
+      if (!ds_user_id || !sessionid) {
+          return res.status(401).json({
+              message: 'Unauthorized',
+              status: 'fail',
+              error_type: 'authentication',
+          });
+      }
+
+      // Ensure user is authenticated
+      const account = await User.findOne({ userID: ds_user_id, sessionID: sessionid }).exec();
+      if (!account) {
+          return res.status(401).json({
+              message: 'Unauthorized',
+              status: 'fail',
+              error_type: 'authentication',
+          });
+      }
+
+      const uploadedPhoto = req.file;
+
+      if (req.file.size > 8000000) {
+          return res.status(400).json({ message: 'File too large' });
+      }
+
+      const fileName = `public/profilePictures/${account.userID}.png`;
+      await sharp(uploadedPhoto.buffer).toFile(fileName);
+
+      // change the link in the database
+      await User.updateOne({ userID: account.userID }, { profilePicture: config.host + fileName });
+
+      // Reply with the updated user information
+      const response = {
+        user: {
+          biography: account.biography,
+          full_name: account.fullname,
+          gender: 3,
+          is_private: account.private,
+          pk: account.userID,
+          pk_id: account.userID,
+          strong_id__: account.userID,
+          external_url: account.website,
+          email: account.email,
+          has_anonymous_profile_picture: false,
+          hd_profile_pic_url_info: {
+            url: "",
+            width: 1080,
+            height: 1080,
+          },
+          hd_profile_pic_versions: [
+            {
+              width: 320,
+              height: 320,
+              url: account.profilePicture,
+            },
+            {
+              width: 640,
+              height: 640,
+              url: account.profilePicture,
+            },
+          ],
+          is_verified: account.verified,
+          phone_number: "",
+          profile_pic_id: "1",
+          profile_pic_url: account.profilePicture,
+          trusted_username: account.username,
+          trust_days: 0,
+          username: account.username,
+        },
+        status: "ok",
+      };
+
+      res.json(response);
+  } catch (error) {
+      console.error('Error:', error);
+      res.status(500).json({ message: 'Internal server error' });
   }
 });
 
