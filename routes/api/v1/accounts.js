@@ -131,7 +131,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
-router.post("/create", upload.none(), async (req, res) => {
+router.post("/create", upload.single('profile_pic'), async (req, res) => {
   const signedBody = req.body.signed_body;
 
   if (!signedBody) {
@@ -178,6 +178,37 @@ router.post("/create", upload.none(), async (req, res) => {
     const token = Math.floor(Math.random() * 2147483647); // Random token
     const hashedPassword = await bcrypt.hash(token + password + token, 10);
 
+    let profilePictureUrl = config.host + "public/profilePictures/default.png"; 
+
+    // Check if a profile picture is uploaded
+    if (req.file) {
+      const uploadedPhoto = req.file;
+
+      if (req.file.size > 8000000) {
+        return res.status(400).json({ message: "File too large" });
+      }
+
+      const fileName = `public/profilePictures/${userID}.png`;
+      await sharp(uploadedPhoto.buffer).resize({ width: 500, height: 500 }).png().toFile(fileName);
+
+      profilePictureUrl = config.host + fileName;
+    }
+
+    const generateRandomString = (length) => {
+      let result = "";
+      const characters =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+      const charactersLength = characters.length;
+      for (let i = 0; i < length; i++) {
+        result += characters.charAt(
+          Math.floor(Math.random() * charactersLength)
+        );
+      }
+      return result;
+    };
+
+    const sessionID = generateRandomString(64);
+
     // Create new user
     const newUser = new User({
       userID,
@@ -186,13 +217,13 @@ router.post("/create", upload.none(), async (req, res) => {
       password: hashedPassword,
       uniqueToken: token,
       deviceID,
-      sessionID: "",
+      sessionID,
       private: false,
       verified: false,
       followerCount: 0,
       followingCount: 0,
       photoCount: 0,
-      profilePicture: config.host + "public/profilePictures/default.png",
+      profilePicture: profilePictureUrl,
       fullname: username,
     });
 
@@ -485,7 +516,7 @@ router.post('/change_profile_picture', upload.single('profile_pic'), async (req,
       }
 
       const fileName = `public/profilePictures/${account.userID}.png`;
-      await sharp(uploadedPhoto.buffer).toFile(fileName);
+      await sharp(uploadedPhoto.buffer).resize({ width: 500, height: 500 }).png().toFile(fileName);
 
       // change the link in the database
       await User.updateOne({ userID: account.userID }, { profilePicture: config.host + fileName });

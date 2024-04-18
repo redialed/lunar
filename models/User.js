@@ -9,7 +9,7 @@ const UserSchema = new mongoose.Schema(
     password: { type: String, required: true },
     uniqueToken: { type: String, required: true, unique: true },
     deviceID: { type: String, required: true },
-    sessionID: { type: String },
+    sessionID: { type: String, unique: true },
     private: { type: Boolean, required: true },
     verified: { type: Boolean, required: true },
     followerCount: { type: Number, required: true, default: 0 },
