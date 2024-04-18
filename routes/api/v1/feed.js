@@ -5,6 +5,7 @@ const router = express.Router();
 const User = require("../../../models/User");
 const Post = require("../../../models/Post");
 const Follow = require("../../../models/Follow");
+const Like = require("../../../models/Like");
 
 router.get("/user/:id", async (req, res) => {
   try {
@@ -56,6 +57,12 @@ router.get("/user/:id", async (req, res) => {
         const width = dimensions.width;
         const height = dimensions.height;
 
+        // check if logged in user has liked the post
+        const hasLiked = await Like.findOne({
+          from: accountId,
+          to: post.postID,
+        });
+
         const itemsArrayBro = {
           taken_at: Math.floor(post.postTimestamp.getTime() / 1000),
           pk: post.postPK,
@@ -96,8 +103,8 @@ router.get("/user/:id", async (req, res) => {
             action_type: null,
           },
           has_hidden_comments: false,
-          has_liked: false,
-          like_count: 0,
+          has_liked: hasLiked ? true : false,
+          like_count: post.likes,
           top_likers: [],
           clips_tab_pinned_user_ids: [],
           can_viewer_save: true,
@@ -339,6 +346,12 @@ router.post("/timeline", async (req, res) => {
         const width = dimensions.width;
         const height = dimensions.height;
 
+        // check if logged in user has liked the post
+        const hasLiked = await Like.findOne({
+          from: account.userID,
+          to: post.postID,
+        });
+
         const itemsArrayBro = {
           taken_at: Math.floor(post.postTimestamp.getTime() / 1000),
           pk: post.postPK,
@@ -379,8 +392,8 @@ router.post("/timeline", async (req, res) => {
             action_type: null,
           },
           has_hidden_comments: false,
-          has_liked: false,
-          like_count: 0,
+          has_liked: hasLiked ? true : false,
+          like_count: post.likes,
           top_likers: [],
           clips_tab_pinned_user_ids: [],
           can_viewer_save: true,
@@ -609,6 +622,12 @@ router.get("/timeline", async (req, res) => {
         const width = dimensions.width;
         const height = dimensions.height;
 
+        // check if logged in user has liked the post
+        const hasLiked = await Like.findOne({
+          from: account.userID,
+          to: post.postID,
+        });
+
         const itemsArrayBro = {
           taken_at: Math.floor(post.postTimestamp.getTime() / 1000),
           pk: post.postPK,
@@ -649,8 +668,8 @@ router.get("/timeline", async (req, res) => {
             action_type: null,
           },
           has_hidden_comments: false,
-          has_liked: false,
-          like_count: 0,
+          has_liked: hasLiked ? true : false,
+          like_count: post.likes,
           top_likers: [],
           clips_tab_pinned_user_ids: [],
           can_viewer_save: true,
