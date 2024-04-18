@@ -1012,4 +1012,178 @@ router.post("/:comment_id/comment_unlike", async (req, res) => {
   res.json({ status: "ok" });
 });
 
+// get all the likers for a comment, at /:comment_id/comment_likers/
+router.get("/:comment_id/comment_likers", async (req, res) => {
+  const { ds_user_id, sessionid } = req.cookies;
+
+  if (!ds_user_id || !sessionid) {
+    return res.status(401).json({
+      message: "Unauthorized",
+      status: "fail",
+      error_type: "authentication",
+    });
+  }
+
+  // Ensure user is authenticated
+  const user = await User.findOne({
+    userID: ds_user_id,
+    sessionID: sessionid,
+  }).exec();
+  if (!user) {
+    return res.status(401).json({
+      message: "Unauthorized",
+      status: "fail",
+      error_type: "authentication",
+    });
+  }
+
+  const comment = await Comment.findOne({ id: req.params.comment_id }).exec();
+
+  if (!comment) {
+    return res.status(404).json({
+      status: "fail",
+      error_type: "comment_not_found",
+    });
+  }
+
+  const likers = await Like.find({ to: comment.id, type: "comment" }).exec();
+
+  const likersList = [];
+
+  for (const like of likers) {
+    const liker = await User.findOne({ userID: like.from }).exec();
+
+    // check if logged in user is following the liker
+    const following = await Follow.findOne({
+      from: ds_user_id,
+      to: liker.userID,
+    }).exec();
+
+    // check if liker is following the logged in user
+    const followedBy = await Follow.findOne({
+      from: liker.userID,
+      to: ds_user_id,
+    }).exec();
+
+    likersList.push({
+      pk: liker.userID,
+      pk_id: liker.userID,
+      username: liker.username,
+      full_name: liker.fullname,
+      is_private: liker.private,
+      strong_id__: liker.userID,
+      is_verified: liker.verified,
+      profile_pic_id: liker.userID,
+      profile_pic_url: liker.profilePicture,
+      account_badges: [],
+      friendship_status: {
+        following: following ? true : false,
+        followed_by: followedBy ? true : false,
+        blocking: false,
+        muting: false,
+        is_private: false,
+        incoming_request: false,
+        outgoing_request: false,
+        is_blocking_reel: false,
+        is_muting_reel: false,
+        is_bestie: false,
+        is_restricted: false,
+        is_feed_favorite: false,
+        subscribed: false,
+        is_eligible_to_subscribe: false,
+        is_muting_notes: false,
+      },
+      latest_reel_media: 0,
+    });
+  }
+
+  res.json({
+    users: likersList,
+    user_count: likersList.length,
+    status: "ok",
+  });
+});
+
+// to delete comments, you need to bulk_delete, at /:post_id/bulk_delete/, use the signed_body to get the comment ids at "comment_ids_to_delete" which looks like this "comment_ids_to_delete":"41170547176752390,14034266993572340", make sure before deleting that the person deleting it owns all the comments or owns the post itself
+router.post("/:post_id/comment/bulk_delete", async (req, res) => {
+  const { ds_user_id, sessionid } = req.cookies;
+
+  if (!ds_user_id || !sessionid) {
+    return res.status(401).json({
+      message: "Unauthorized",
+      status: "fail",
+      error_type: "authentication",
+    });
+  }
+
+  // Ensure user is authenticated
+  const user = await User.findOne({
+    userID: ds_user_id,
+    sessionID: sessionid,
+  }).exec();
+  if (!user) {
+    return res.status(401).json({
+      message: "Unauthorized",
+      status: "fail",
+      error_type: "authentication",
+    });
+  }
+
+  const signedBody = req.body.signed_body;
+
+  if (!signedBody) {
+    return res.status(400).json({
+      status: "fail",
+      error_type: "no_signed_body",
+    });
+  }
+
+  const sentJson = signedBody.substring(65);
+  const decodedJson = JSON.parse(sentJson);
+
+  if (!decodedJson.comment_ids_to_delete) {
+    return res.status(400).json({
+      status: "fail",
+      error_type: "no_comment_ids",
+    });
+  }
+
+  const commentIds = decodedJson.comment_ids_to_delete.split(",");
+
+  for (const commentId of commentIds) {
+    const comment = await Comment.findOne({ id: commentId }).exec();
+
+    if (!comment) {
+      return res.status(404).json({
+        status: "fail",
+        error_type: "comment_not_found",
+      });
+    }
+
+    const post = await Post.findOne({ postID: req.params.post_id }).exec();
+
+    if (!post) {
+      return res.status(404).json({
+        status: "fail",
+        error_type: "post_not_found",
+      });
+    }
+
+    console.log(post.uploadedBy, user.userID, comment.from, user.userID)
+
+    if (post.uploadedBy !== user.userID && comment.from !== user.userID) {
+      return res.status(403).json({
+        status: "fail",
+        error_type: "not_owner",
+      });
+    }
+
+    await Like.deleteMany({ to: comment.id, type: "comment" });
+    await Comment.deleteOne({ id: comment.id });
+    await Post.updateOne({ postID: post.postID }, { $inc: { comments: -1 } });
+  }
+
+  res.json({ status: "ok" });
+});
+
 module.exports = router;
