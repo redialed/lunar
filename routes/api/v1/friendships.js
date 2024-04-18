@@ -218,7 +218,7 @@ router.post("/destroy/:id", async (req, res) => {
       to: accountId,
     }).exec();
 
-    await existingFollow.deleteOne();
+    await existingFollow.deleteOne({ from: accountId, to: idToUnfollow });
 
     userToUnfollow.followerCount -= 1;
     await userToUnfollow.save();

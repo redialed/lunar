@@ -408,7 +408,7 @@ router.post("/:id/unlike", async (req, res) => {
 
   await Post.updateOne({ postID: post.postID }, { $inc: { likes: -1 } });
 
-  await Like.deleteOne();
+  await Like.deleteOne({ to: post.postID, from: ds_user_id });
 
   res.json({ status: "ok" });
 });
@@ -536,6 +536,13 @@ router.post("/:id/delete", async (req, res) => {
       return res.status(404).json({
         status: "fail",
         error_type: "post_not_found",
+      });
+    }
+
+    if (post.uploadedBy !== ds_user_id) {
+      return res.status(403).json({
+        status: "fail",
+        error_type: "not_owner",
       });
     }
 
