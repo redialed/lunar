@@ -54,7 +54,7 @@ router.post("/photo", upload.single("photo"), async (req, res) => {
     }
 
     const postTimestamp = Date.now();
-    const description = "Currently descriptions are not supported!";
+    const description = null;
     const isVideo = 0;
 
     function generateId(length) {

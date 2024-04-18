@@ -4,6 +4,7 @@ const router = express.Router();
 
 const User = require("../../../models/User");
 const Post = require("../../../models/Post");
+const Follow = require("../../../models/Follow");
 
 router.get("/user/:id", async (req, res) => {
   try {
@@ -300,10 +301,10 @@ router.post("/timeline", async (req, res) => {
 
     const fullArray = [];
 
-    // get posts from the newest to the oldest
-    const posts = await Post.find({ })
-      .sort({ postTimestamp: -1 })
-      .exec();
+    const follows = await Follow.find({ from: account.userID })
+    const followedUserIds = follows.map(follow => follow.to);
+    const posts = await Post.find({ uploadedBy: { $in: followedUserIds } }).sort('-date');
+
     const postCount = posts.length;
 
     // Loop through each post
@@ -529,7 +530,7 @@ router.post("/timeline", async (req, res) => {
 
     return res.json({
       items: fullArray,
-      num_results: 0,
+      num_results: postCount,
       more_available: false,
       auto_load_more_enabled: false,
       status: "ok",
@@ -555,10 +556,10 @@ router.get("/timeline", async (req, res) => {
 
     const fullArray = [];
 
-    // get posts from the newest to the oldest
-    const posts = await Post.find({ })
-      .sort({ postTimestamp: -1 })
-      .exec();
+    const follows = await Follow.find({ from: account.userID })
+    const followedUserIds = follows.map(follow => follow.to);
+    const posts = await Post.find({ uploadedBy: { $in: followedUserIds } }).sort('-date');
+
     const postCount = posts.length;
 
     // Loop through each post
@@ -784,7 +785,7 @@ router.get("/timeline", async (req, res) => {
 
     return res.json({
       items: fullArray,
-      num_results: 0,
+      num_results: postCount,
       more_available: false,
       auto_load_more_enabled: false,
       status: "ok",
