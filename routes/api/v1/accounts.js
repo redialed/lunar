@@ -192,7 +192,7 @@ router.post("/create", upload.none(), async (req, res) => {
       followerCount: 0,
       followingCount: 0,
       photoCount: 0,
-      profilePicture: "/ign/icon.png",
+      profilePicture: config.host + "public/profilePictures/default.png",
       fullname: username,
     });
 
