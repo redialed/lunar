@@ -3,6 +3,7 @@ const multer = require("multer");
 const router = express.Router();
 const bcrypt = require("bcrypt");
 const sharp = require('sharp');
+const fs = require('fs');
 const config = require("../../../config");
 
 const User = require("../../../models/User");
@@ -178,9 +179,16 @@ router.post("/create", upload.single('profile_pic'), async (req, res) => {
     const token = Math.floor(Math.random() * 2147483647); // Random token
     const hashedPassword = await bcrypt.hash(token + password + token, 10);
 
+    function generateId(length) {
+      const min = Math.pow(10, length - 1);
+      const max = Math.pow(10, length) - 1;
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    const pfpPK = generateId(19);
+
     let profilePictureUrl = config.host + "public/profilePictures/default.png"; 
 
-    // Check if a profile picture is uploaded
     if (req.file) {
       const uploadedPhoto = req.file;
 
@@ -188,7 +196,11 @@ router.post("/create", upload.single('profile_pic'), async (req, res) => {
         return res.status(400).json({ message: "File too large" });
       }
 
-      const fileName = `public/profilePictures/${userID}.png`;
+      if (!fs.existsSync(`public/profilePictures/${userID}`)) {
+        fs.mkdirSync(`public/profilePictures/${userID}`, { recursive: true });
+      }
+
+      const fileName = `public/profilePictures/${userID}/${pfpPK}_${userID}.png`;
       await sharp(uploadedPhoto.buffer).resize({ width: 500, height: 500 }).png().toFile(fileName);
 
       profilePictureUrl = config.host + fileName;
@@ -509,13 +521,25 @@ router.post('/change_profile_picture', upload.single('profile_pic'), async (req,
           });
       }
 
+      function generateId(length) {
+        const min = Math.pow(10, length - 1);
+        const max = Math.pow(10, length) - 1;
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+  
+      const pfpPK = generateId(19);
+
       const uploadedPhoto = req.file;
 
       if (req.file.size > 8000000) {
-          return res.status(400).json({ message: 'File too large' });
+        return res.status(400).json({ message: "File too large" });
       }
 
-      const fileName = `public/profilePictures/${account.userID}.png`;
+      if (!fs.existsSync(`public/profilePictures/${account.userID}`)) {
+        fs.mkdirSync(`public/profilePictures/${account.userID}`, { recursive: true });
+      }
+
+      const fileName = `public/profilePictures/${account.userID}/${pfpPK}_${account.userID}.png`;
       await sharp(uploadedPhoto.buffer).resize({ width: 500, height: 500 }).png().toFile(fileName);
 
       // change the link in the database
