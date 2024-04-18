@@ -362,6 +362,7 @@ router.post("/:id/like", async (req, res) => {
   await Like.create({
     from: user.userID,
     to: post.postID,
+    postID: post.postID,
     type: "post",
   });
 
@@ -549,7 +550,7 @@ router.post("/:id/delete", async (req, res) => {
       });
     }
 
-    if (post.uploadedBy !== ds_user_id) {
+    if (post.uploadedBy !== user.userID) {
       return res.status(403).json({
         status: "fail",
         error_type: "not_owner",
@@ -559,6 +560,8 @@ router.post("/:id/delete", async (req, res) => {
     await Like.deleteMany({ to: req.params.id, type: "post" });
     await Post.deleteOne({ postID: req.params.id });
     await User.updateOne({ userID: ds_user_id }, { $inc: { photoCount: -1 } });
+    await Comment.deleteMany({ to: req.params.id });
+    await Like.deleteMany({ postID: req.params.id, type: "comment" });
 
     res.json({
       did_delete: true,
@@ -657,102 +660,6 @@ router.post("/:id/comment", async (req, res) => {
     status: "ok",
   });
 });
-
-// get all the comments for a post using /:id/comments, the example json format will be below
-// {
-//   "comment_likes_enabled": true,
-//   "comments": [
-//     {
-//       "pk": "17995773164357241",
-//       "user_id": "62557766374",
-//       "type": 0,
-//       "did_report_as_spam": false,
-//       "created_at": 1713330529,
-//       "created_at_utc": 1713330529,
-//       "content_type": "comment",
-//       "status": "Active",
-//       "bit_flags": 0,
-//       "share_enabled": true,
-//       "is_ranked_comment": true,
-//       "media_id": "3305031090890187007",
-//       "comment_index": 0,
-//       "user": {
-//         "pk": "62557766374",
-//         "pk_id": "62557766374",
-//         "id": "62557766374",
-//         "username": "bih.hanaaa",
-//         "full_name": "𝒽𝒶𝓃𝒶 😌💅🏼",
-//         "is_private": false,
-//         "strong_id__": "62557766374",
-//         "fbid_v2": "17841462591239720",
-//         "is_verified": false,
-//         "profile_pic_id": "3326260052077200452_62557766374",
-//         "profile_pic_url": "https://instagram.fbru4-1.fna.fbcdn.net/v/t51.2885-19/433708442_1807347906433335_6368858596492965834_n.jpg?stp=dst-jpg_s150x150\u0026_nc_ht=instagram.fbru4-1.fna.fbcdn.net\u0026_nc_cat=103\u0026_nc_ohc=37m90T6KotQAb622SbA\u0026edm=AId3EpQBAAAA\u0026ccb=7-5\u0026oh=00_AfCp09ELgAwIrgd8GzMxWu0ZI43RPE_CNZEuQClTj9wq5A\u0026oe=6627731C\u0026_nc_sid=f5838a",
-//         "is_mentionable": true,
-//         "latest_reel_media": 0,
-//         "latest_besties_reel_media": 0
-//       },
-//       "text": "HOW MANY LETTERS DOES THE WORD \"DECEMBER\" HAVE??? 💅🏼✨🔥",
-//       "is_covered": true,
-//       "inline_composer_display_condition": "never",
-//       "has_liked_comment": false,
-//       "comment_like_count": 0,
-//       "preview_child_comments": [],
-//       "child_comment_count": 0,
-//       "other_preview_users": [],
-//       "private_reply_status": 0
-//     }
-//   ],
-//   "comment_count": 19,
-//   "caption": {
-//     "pk": "18011803037238607",
-//     "user_id": "62910638693",
-//     "type": 1,
-//     "did_report_as_spam": false,
-//     "created_at": 1708210431,
-//     "created_at_utc": 1708210431,
-//     "content_type": "comment",
-//     "status": "Active",
-//     "bit_flags": 0,
-//     "share_enabled": true,
-//     "is_ranked_comment": true,
-//     "media_id": "3305031090890187007",
-//     "is_created_by_media_owner": true,
-//     "user": {
-//       "pk": "62910638693",
-//       "pk_id": "62910638693",
-//       "id": "62910638693",
-//       "username": "dolltasy",
-//       "full_name": "dolltasy",
-//       "is_private": false,
-//       "strong_id__": "62910638693",
-//       "fbid_v2": "17841463080793829",
-//       "is_verified": false,
-//       "profile_pic_id": "3345558261660315202_62910638693",
-//       "profile_pic_url": "https://instagram.fbru4-1.fna.fbcdn.net/v/t51.2885-19/437303237_393529493643465_7086711369752110805_n.jpg?stp=dst-jpg_s150x150\u0026_nc_ht=instagram.fbru4-1.fna.fbcdn.net\u0026_nc_cat=1\u0026_nc_ohc=T3hKv2oI2FsAb4oB6VM\u0026edm=AId3EpQBAAAA\u0026ccb=7-5\u0026oh=00_AfBdUSJ-rOC7E2vnuBT7yXURuCrI6XbDcforIqmcxVoBXg\u0026oe=662756DC\u0026_nc_sid=f5838a"
-//     },
-//     "text": "☆",
-//     "is_covered": false,
-//     "private_reply_status": 0
-//   },
-//   "caption_is_edited": false,
-//   "has_more_comments": false,
-//   "has_more_headload_comments": true,
-//   "liked_by_media_owner_badge_enabled": true,
-//   "show_comments_for_you_demarcator": true,
-//   "preview_comments": [],
-//   "threading_enabled": true,
-//   "media_header_display": "none",
-//   "initiate_at_top": true,
-//   "insert_new_comment_to_top": true,
-//   "can_view_more_preview_comments": false,
-//   "next_min_id": "{\"bifilter_token\": \"KHkA4Xq4KHQCQADCGDCkVGo_AOa6r_jRuD8AZ25iSSu2PwCphrguAfs_AE05RJJh7z8Az0qsW-9rPwDSJSfBrOo_AJOlvd5bB0AA89ViA7dmQAB5hutyD-8_ADy_AFx5AkAA3QN_KwL4PwDei3jPzRJAAD8IoXjVmz8AAA==\"}",
-//   "scroll_behavior": 1,
-//   "comment_cover_pos": "bottom",
-//   "is_ranked": true,
-//   "comment_filter_param": "no_filter",
-//   "status": "ok"
-// }
 
 router.get("/:id/comments", async (req, res) => {
   const { ds_user_id, sessionid } = req.cookies;
@@ -947,9 +854,12 @@ router.post("/:comment_id/comment_like", async (req, res) => {
     });
   }
 
+  const post = await Post.findOne({ postID: comment.to }).exec();
+
   await Like.create({
     from: user.userID,
     to: comment.id,
+    postID: post.postID,
     type: "comment",
   });
 
