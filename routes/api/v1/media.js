@@ -7,13 +7,23 @@ const User = require("../../../models/User");
 router.post('/configure', async (req, res) => {
   try {
     const { ds_user_id, sessionid } = req.cookies;
+
     if (!ds_user_id || !sessionid) {
-      return res.status(403).json({ message: 'Not allowed!' });
+      return res.status(401).json({
+        message: "Unauthorized",
+        status: "fail",
+        error_type: "authentication",
+      });
     }
 
-    const account = await User.findOne({ userID: ds_user_id });
-    if (!account) {
-      return res.status(404).json({ message: 'Account not found' });
+    // Ensure user is authenticated
+    const user = await User.findOne({ userID: ds_user_id, sessionID: sessionid }).exec();
+    if (!user) {
+      return res.status(401).json({
+        message: "Unauthorized",
+        status: "fail",
+        error_type: "authentication",
+      });
     }
 
     const { signed_body } = req.body;

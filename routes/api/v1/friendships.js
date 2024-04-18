@@ -5,18 +5,26 @@ const User = require("../../../models/User");
 const Follow = require("../../../models/Follow");
 
 router.get("/show/:id", async (req, res) => {
-  const accountId = req.cookies.ds_user_id;
-  const sessionID = req.cookies.sessionid;
+    const accountId = req.cookies.ds_user_id;
+    const sessionID = req.cookies.sessionid;
 
-  // Ensure user is authenticated
-  const user = await User.findOne({ userID: accountId, sessionID }).exec();
-  if (!user) {
-    return res.status(401).json({
-      message: "Unauthorized",
-      status: "fail",
-      error_type: "authentication",
-    });
-  }
+    if (!accountId || !sessionID) {
+      return res.status(401).json({
+        message: "Unauthorized",
+        status: "fail",
+        error_type: "authentication",
+      });
+    }
+
+    // Ensure user is authenticated
+    const user = await User.findOne({ userID: accountId, sessionID }).exec();
+    if (!user) {
+      return res.status(401).json({
+        message: "Unauthorized",
+        status: "fail",
+        error_type: "authentication",
+      });
+    }
 
   const idToLookup = req.params.id;
 
@@ -58,6 +66,14 @@ router.post("/create/:id", async (req, res) => {
   try {
     const accountId = req.cookies.ds_user_id;
     const sessionID = req.cookies.sessionid;
+
+    if (!accountId || !sessionID) {
+      return res.status(401).json({
+        message: "Unauthorized",
+        status: "fail",
+        error_type: "authentication",
+      });
+    }
 
     // Ensure user is authenticated
     const user = await User.findOne({ userID: accountId, sessionID }).exec();
@@ -149,6 +165,14 @@ router.post("/destroy/:id", async (req, res) => {
     const accountId = req.cookies.ds_user_id;
     const sessionID = req.cookies.sessionid;
 
+    if (!accountId || !sessionID) {
+      return res.status(401).json({
+        message: "Unauthorized",
+        status: "fail",
+        error_type: "authentication",
+      });
+    }
+
     // Ensure user is authenticated
     const user = await User.findOne({ userID: accountId, sessionID }).exec();
     if (!user) {
@@ -230,17 +254,25 @@ router.post("/destroy/:id", async (req, res) => {
 });
 
 router.get("/:id/followers", async (req, res) => {
-  const accountId = req.cookies.ds_user_id;
-  const sessionID = req.cookies.sessionid;
+    const accountId = req.cookies.ds_user_id;
+    const sessionID = req.cookies.sessionid;
 
-  // Ensure user is authenticated
-  const user = await User.findOne({ userID: accountId, sessionID }).exec();
-    if (!user) {
-        return res.status(401).json({
+    if (!accountId || !sessionID) {
+      return res.status(401).json({
         message: "Unauthorized",
         status: "fail",
         error_type: "authentication",
-        });
+      });
+    }
+
+    // Ensure user is authenticated
+    const user = await User.findOne({ userID: accountId, sessionID }).exec();
+    if (!user) {
+      return res.status(401).json({
+        message: "Unauthorized",
+        status: "fail",
+        error_type: "authentication",
+      });
     }
 
     const idToLookup = req.params.id;
@@ -281,14 +313,22 @@ router.get("/:id/following", async (req, res) => {
     const accountId = req.cookies.ds_user_id;
     const sessionID = req.cookies.sessionid;
 
+    if (!accountId || !sessionID) {
+      return res.status(401).json({
+        message: "Unauthorized",
+        status: "fail",
+        error_type: "authentication",
+      });
+    }
+
     // Ensure user is authenticated
     const user = await User.findOne({ userID: accountId, sessionID }).exec();
     if (!user) {
-        return res.status(401).json({
-            message: "Unauthorized",
-            status: "fail",
-            error_type: "authentication",
-        });
+      return res.status(401).json({
+        message: "Unauthorized",
+        status: "fail",
+        error_type: "authentication",
+      });
     }
 
     const idToLookup = req.params.id;

@@ -11,6 +11,14 @@ router.get("/user/:id", async (req, res) => {
     const accountId = req.cookies.ds_user_id;
     const sessionID = req.cookies.sessionid;
 
+    if (!accountId || !sessionID) {
+      return res.status(401).json({
+        message: "Unauthorized",
+        status: "fail",
+        error_type: "authentication",
+      });
+    }
+
     // Ensure user is authenticated
     const user = await User.findOne({ userID: accountId, sessionID }).exec();
     if (!user) {
@@ -290,8 +298,23 @@ router.get("/user/:id", async (req, res) => {
 router.post("/timeline", async (req, res) => {
   try {
     const { ds_user_id, sessionid } = req.cookies;
+
     if (!ds_user_id || !sessionid) {
-      return res.status(403).json({ message: "Not allowed!" });
+      return res.status(401).json({
+        message: "Unauthorized",
+        status: "fail",
+        error_type: "authentication",
+      });
+    }
+
+    // Ensure user is authenticated
+    const user = await User.findOne({ userID: ds_user_id, sessionID: sessionid }).exec();
+    if (!user) {
+      return res.status(401).json({
+        message: "Unauthorized",
+        status: "fail",
+        error_type: "authentication",
+      });
     }
 
     const account = await User.findOne({ userID: ds_user_id });
@@ -303,7 +326,7 @@ router.post("/timeline", async (req, res) => {
 
     const follows = await Follow.find({ from: account.userID })
     const followedUserIds = follows.map(follow => follow.to);
-    const posts = await Post.find({ uploadedBy: { $in: followedUserIds } }).sort('-date');
+    const posts = await Post.find({ uploadedBy: { $in: followedUserIds } }).sort({ postTimestamp: -1 });
 
     const postCount = posts.length;
 
@@ -545,8 +568,23 @@ router.post("/timeline", async (req, res) => {
 router.get("/timeline", async (req, res) => {
   try {
     const { ds_user_id, sessionid } = req.cookies;
+
     if (!ds_user_id || !sessionid) {
-      return res.status(403).json({ message: "Not allowed!" });
+      return res.status(401).json({
+        message: "Unauthorized",
+        status: "fail",
+        error_type: "authentication",
+      });
+    }
+
+    // Ensure user is authenticated
+    const user = await User.findOne({ userID: ds_user_id, sessionID: sessionid }).exec();
+    if (!user) {
+      return res.status(401).json({
+        message: "Unauthorized",
+        status: "fail",
+        error_type: "authentication",
+      });
     }
 
     const account = await User.findOne({ userID: ds_user_id });
@@ -558,7 +596,7 @@ router.get("/timeline", async (req, res) => {
 
     const follows = await Follow.find({ from: account.userID })
     const followedUserIds = follows.map(follow => follow.to);
-    const posts = await Post.find({ uploadedBy: { $in: followedUserIds } }).sort('-date');
+    const posts = await Post.find({ uploadedBy: { $in: followedUserIds } }).sort({ postTimestamp: -1 });
 
     const postCount = posts.length;
 

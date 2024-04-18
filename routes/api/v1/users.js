@@ -1,7 +1,6 @@
 const express = require("express");
 const multer = require("multer");
 const router = express.Router();
-const bcrypt = require("bcrypt");
 
 const User = require("../../../models/User");
 
@@ -53,6 +52,26 @@ router.post("/check_email", upload.none(), async (req, res) => {
 
 router.get("/:id/info", async (req, res) => {
   try {
+    const { ds_user_id, sessionid } = req.cookies;
+
+    if (!ds_user_id || !sessionid) {
+      return res.status(401).json({
+        message: "Unauthorized",
+        status: "fail",
+        error_type: "authentication",
+      });
+    }
+  
+    // Ensure user is authenticated
+    const userAuth = await User.findOne({ userID: ds_user_id, sessionID: sessionid }).exec();
+    if (!userAuth) {
+      return res.status(401).json({
+        message: "Unauthorized",
+        status: "fail",
+        error_type: "authentication",
+      });
+    }
+
     const id = req.params.id;
     const user = await User.findOne({ userID: id }).exec();
 
@@ -228,6 +247,26 @@ router.get("/:id/info", async (req, res) => {
 });
 
 router.get("/:username/usernameinfo", async (req, res) => {
+  const { ds_user_id, sessionid } = req.cookies;
+
+  if (!ds_user_id || !sessionid) {
+    return res.status(401).json({
+      message: "Unauthorized",
+      status: "fail",
+      error_type: "authentication",
+    });
+  }
+
+  // Ensure user is authenticated
+  const userAuth = await User.findOne({ userID: ds_user_id, sessionID: sessionid }).exec();
+  if (!userAuth) {
+    return res.status(401).json({
+      message: "Unauthorized",
+      status: "fail",
+      error_type: "authentication",
+    });
+  }
+
   const username = req.params.username;
 
   const user = await User.findOne({ username });
@@ -395,6 +434,70 @@ router.get("/:username/usernameinfo", async (req, res) => {
       error_type: "error",
     });
   }
+});
+
+router.get("/search", async (req, res) => {
+  const { ds_user_id, sessionid } = req.cookies;
+
+  if (!ds_user_id || !sessionid) {
+    return res.status(401).json({
+      message: "Unauthorized",
+      status: "fail",
+      error_type: "authentication",
+    });
+  }
+
+  // Ensure user is authenticated
+  const user = await User.findOne({ userID: ds_user_id, sessionID: sessionid }).exec();
+  if (!user) {
+    return res.status(401).json({
+      message: "Unauthorized",
+      status: "fail",
+      error_type: "authentication",
+    });
+  }
+
+  const query = req.query.q;
+
+  const users = await User.find({ username: { $regex: query, $options: "i" } });
+
+  const response = {
+    num_results: users.length,
+    users: [],
+    has_more: false,
+    status: "ok",
+  };
+
+  for (const user of users) {
+    response.users.push(      {
+      fbid_v2: user.userID,
+      pk: user.userID,
+      pk_id: user.userID,
+      full_name: user.fullname,
+      is_private: user.private,
+      third_party_downloads_enabled: 0,
+      has_anonymous_profile_picture: true,
+      username: user.username,
+      is_verified: user.verified,
+      has_opt_eligible_shop: false,
+      profile_pic_url: user.profilePicture,
+      account_badges: [],
+      friendship_status: {
+        following: false,
+        is_private: false,
+        incoming_request: false,
+        outgoing_request: false,
+        is_bestie: false,
+        is_restricted: false,
+        is_feed_favorite: false,
+      },
+      latest_reel_media: 0,
+      is_verified_search_boosted: user.verified ? true : false,
+      should_show_category: false,
+    },);
+  }
+
+  res.json(response);
 });
 
 module.exports = router;
