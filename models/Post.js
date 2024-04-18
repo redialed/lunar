@@ -6,6 +6,7 @@ const PostSchema = new mongoose.Schema(
     postID: { type: String, required: true, unique: true },
     uploadedBy: { type: String, required: true },
     mediaURL: { type: String, required: true, default: null },
+    mediaURI: { type: String, required: true, default: null },
     views: { type: Number, default: 0 },
     likes: { type: Number, default: 0 },
     comments: { type: Number, default: 0 },

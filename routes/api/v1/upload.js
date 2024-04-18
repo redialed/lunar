@@ -33,8 +33,6 @@ router.post("/photo", upload.single("photo"), async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ userID: ds_user_id }); 
-
     let originaluploadid = upload_id;
 
     const existingPost = await Post.findOne({
@@ -75,6 +73,7 @@ router.post("/photo", upload.single("photo"), async (req, res) => {
       postID,
       uploadedBy: account.userID,
       mediaURL: null,
+      mediaURI: null,
       postTimestamp: postTimestamp,
       description: description,
       originalUploadID: originaluploadid,
@@ -84,6 +83,8 @@ router.post("/photo", upload.single("photo"), async (req, res) => {
 
     const photoURL = config.host + `public/photos/${account.userID}/${postID}.png`;
     newPost.mediaURL = photoURL;
+    const photoURI = `public/photos/${account.userID}/${postID}.png`;
+    newPost.mediaURI = photoURI;
 
     const newName = `public/photos/${account.userID}/${postID}.png`;
 
