@@ -6,5 +6,6 @@ router.use("/users", require("./users"));
 router.use('/upload', require('./upload'));
 router.use('/media', require('./media'));
 router.use('/feed', require('./feed'));
+router.use('/friendships', require('./friendships'));
 
 module.exports = router;
