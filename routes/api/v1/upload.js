@@ -24,6 +24,17 @@ router.post("/photo", upload.single("photo"), async (req, res) => {
       return res.status(403).json({ message: "Not allowed!" });
     }
 
+    const checkUser = await User.findOne({ userID: ds_user_id, sessionID: sessionid }).exec();
+    if (!checkUser) {
+      return res.status(401).json({
+        message: "Unauthorized",
+        status: "fail",
+        error_type: "authentication",
+      });
+    }
+
+    const user = await User.findOne({ userID: ds_user_id }); 
+
     let originaluploadid = upload_id;
 
     const existingPost = await Post.findOne({

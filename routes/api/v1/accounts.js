@@ -45,7 +45,20 @@ router.post("/login", async (req, res) => {
     const saltedPassword = token + password + token;
 
     if (await bcrypt.compare(saltedPassword, hashedPassword)) {
-      const sessionID = Math.random().toString(36).substring(2);
+      const generateRandomString = (length) => {
+        let result = "";
+        const characters =
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        const charactersLength = characters.length;
+        for (let i = 0; i < length; i++) {
+          result += characters.charAt(
+            Math.floor(Math.random() * charactersLength)
+          );
+        }
+        return result;
+      };
+
+      const sessionID = generateRandomString(64);
 
       await User.updateOne({ username }, { sessionID });
 
@@ -278,7 +291,7 @@ router.get("/current_user", async (req, res) => {
         account_badges: [],
         all_media_count: 0,
         birthday_today_visibility_for_viewer: "NOT_VISIBLE",
-        email: "jon@doe.cs",
+        email: user.email,
         has_anonymous_profile_picture: false,
         hd_profile_pic_url_info: {
           url: "",
@@ -338,6 +351,109 @@ router.get("/current_user", async (req, res) => {
     console.error(err);
     res.status(500).json({ message: "Internal Server Error", status: "fail" });
   }
+});
+
+router.post("/edit_profile", async (req, res) => {
+  try {
+    const accountId = req.cookies.ds_user_id;
+    const user = await User.findOne({ userID: accountId }).exec();
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found!",
+        status: "fail",
+        error_type: "error",
+      });
+    }
+
+    // Verify if user is authenticated using the cookie sessionid and verify if the sessionid is valid
+    if (user.sessionID !== req.cookies.sessionid || !req.cookies.sessionid) {
+      return res.status(401).json({
+        message: "Unauthorized",
+        status: "fail",
+        error_type: "authentication",
+      });
+    }
+
+    const signedBody = req.body.signed_body;
+    if (!signedBody) {
+      return res.status(400).json({
+        errors: {
+          error: ["Signed body is missing!"],
+        },
+        status: "ok",
+        error_type: "generic_request_error",
+      });
+    }
+
+    const sentJson = signedBody.substring(65);
+    const decodedJson = JSON.parse(sentJson);
+
+    const username = decodedJson.username;
+    const fullname = decodedJson.first_name;
+    const biography = decodedJson.biography;
+    const website = decodedJson.external_url;
+    const email = decodedJson.email;
+
+    await User.updateOne(
+      { userID: accountId },
+      { username, fullname, biography, website, email }
+    );
+
+    if (user.verified && user.username !== username) {
+      await User.updateOne({ userID: accountId }, { verified: false });
+    }
+
+    // Reply with the updated user information
+    const response = {
+      user: {
+        biography,
+        full_name: fullname,
+        gender: 3,
+        is_private: user.private,
+        pk: user.userID,
+        pk_id: user.userID,
+        strong_id__: user.userID,
+        external_url: website,
+        email,
+        has_anonymous_profile_picture: false,
+        hd_profile_pic_url_info: {
+          url: "",
+          width: 1080,
+          height: 1080,
+        },
+        hd_profile_pic_versions: [
+          {
+            width: 320,
+            height: 320,
+            url: user.profilePicture,
+          },
+          {
+            width: 640,
+            height: 640,
+            url: user.profilePicture,
+          },
+        ],
+        is_verified: user.verified,
+        phone_number: "",
+        profile_pic_id: "1",
+        profile_pic_url: user.profilePicture,
+        trusted_username: username,
+        trust_days: 0,
+        username,
+      },
+      status: "ok",
+    };
+
+    res.json(response);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal Server Error", status: "fail" });
+  }
+});
+
+router.post("/logout", async (req, res) => {
+  res.json({ status: "ok" });
 });
 
 module.exports = router;
