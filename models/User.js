@@ -21,5 +21,3 @@ const UserSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model("User", UserSchema);
-
-// ID, username, Password, uniquetoken, device_id, sessionid, isaccountprivate, isverified, followercount, followingcount, photocount, pfpURL, fullname, biography, website

@@ -21,7 +21,7 @@ db.once("open", () => {
   console.log("Connected to MongoDB");
 });
 
-app.use(express.static("public"));
+app.use("/public", express.static(__dirname + '/public'));
 app.use(require("./routes"));
 
 app.get("/api/v2/status", (req, res) => {
