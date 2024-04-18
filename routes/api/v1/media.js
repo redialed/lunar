@@ -5,6 +5,7 @@ const Post = require("../../../models/Post"); // Assuming your Post model is def
 const User = require("../../../models/User");
 const Like = require("../../../models/Like");
 const Follow = require("../../../models/Follow");
+const Comment = require("../../../models/Comment");
 
 router.post("/configure", async (req, res) => {
   try {
@@ -345,7 +346,11 @@ router.post("/:id/like", async (req, res) => {
     });
   }
 
-  const like = await Like.findOne({ from: ds_user_id, to: post.postID }).exec();
+  const like = await Like.findOne({
+    from: ds_user_id,
+    to: post.postID,
+    type: "post",
+  }).exec();
 
   if (like) {
     return res.status(400).json({
@@ -357,6 +362,7 @@ router.post("/:id/like", async (req, res) => {
   await Like.create({
     from: user.userID,
     to: post.postID,
+    type: "post",
   });
 
   await Post.updateOne({ postID: post.postID }, { $inc: { likes: 1 } });
@@ -397,7 +403,11 @@ router.post("/:id/unlike", async (req, res) => {
     });
   }
 
-  const like = await Like.findOne({ to: post.postID, from: ds_user_id }).exec();
+  const like = await Like.findOne({
+    to: post.postID,
+    from: ds_user_id,
+    type: "post",
+  }).exec();
 
   if (!like) {
     return res.status(400).json({
@@ -408,7 +418,7 @@ router.post("/:id/unlike", async (req, res) => {
 
   await Post.updateOne({ postID: post.postID }, { $inc: { likes: -1 } });
 
-  await Like.deleteOne({ to: post.postID, from: ds_user_id });
+  await Like.deleteOne({ to: post.postID, from: ds_user_id, type: "post" });
 
   res.json({ status: "ok" });
 });
@@ -447,7 +457,7 @@ router.get("/:id/likers", async (req, res) => {
     });
   }
 
-  const likers = await Like.find({ to: post.postID }).exec();
+  const likers = await Like.find({ to: post.postID, type: "post" }).exec();
 
   const likersList = [];
 
@@ -546,7 +556,7 @@ router.post("/:id/delete", async (req, res) => {
       });
     }
 
-    await Like.deleteMany({ to: req.params.id });
+    await Like.deleteMany({ to: req.params.id, type: "post" });
     await Post.deleteOne({ postID: req.params.id });
     await User.updateOne({ userID: ds_user_id }, { $inc: { photoCount: -1 } });
 
@@ -559,6 +569,447 @@ router.post("/:id/delete", async (req, res) => {
     console.error(err);
     res.status(500).json({ message: "Internal Server Error" });
   }
+});
+
+router.post("/:id/comment", async (req, res) => {
+  const { ds_user_id, sessionid } = req.cookies;
+
+  if (!ds_user_id || !sessionid) {
+    return res.status(401).json({
+      message: "Unauthorized",
+      status: "fail",
+      error_type: "authentication",
+    });
+  }
+
+  // Ensure user is authenticated
+  const user = await User.findOne({
+    userID: ds_user_id,
+    sessionID: sessionid,
+  }).exec();
+  if (!user) {
+    return res.status(401).json({
+      message: "Unauthorized",
+      status: "fail",
+      error_type: "authentication",
+    });
+  }
+
+  const signedBody = req.body.signed_body;
+
+  if (!signedBody) {
+    return res.status(400).json({
+      status: "fail",
+      error_type: "no_signed_body",
+    });
+  }
+
+  const sentJson = signedBody.substring(65);
+  const decodedJson = JSON.parse(sentJson);
+
+  const post = await Post.findOne({ postID: req.params.id }).exec();
+
+  if (!post) {
+    return res.status(404).json({
+      status: "fail",
+      error_type: "post_not_found",
+    });
+  }
+
+  if (!decodedJson.comment_text) {
+    return res.status(400).json({
+      status: "fail",
+      error_type: "no_text",
+    });
+  }
+
+  function generateId(length) {
+    const min = Math.pow(10, length - 1);
+    const max = Math.pow(10, length) - 1;
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  const commentID = generateId(17);
+
+  await Comment.create({
+    id: commentID,
+    from: user.userID,
+    to: post.postID,
+    content: decodedJson.comment_text,
+  });
+
+  await Post.updateOne({ postID: post.postID }, { $inc: { comments: 1 } });
+
+  const comment = await Comment.findOne({ id: commentID }).exec();
+
+  res.json({
+    comment: {
+      id: comment.id,
+      from: {
+        id: user.userID,
+        username: user.username,
+        full_name: user.fullname,
+        profile_picture: user.profilePicture,
+      },
+      text: comment.content,
+      created_at: Math.floor(comment.createdAt.getTime() / 1000),
+    },
+    status: "ok",
+  });
+});
+
+// get all the comments for a post using /:id/comments, the example json format will be below
+// {
+//   "comment_likes_enabled": true,
+//   "comments": [
+//     {
+//       "pk": "17995773164357241",
+//       "user_id": "62557766374",
+//       "type": 0,
+//       "did_report_as_spam": false,
+//       "created_at": 1713330529,
+//       "created_at_utc": 1713330529,
+//       "content_type": "comment",
+//       "status": "Active",
+//       "bit_flags": 0,
+//       "share_enabled": true,
+//       "is_ranked_comment": true,
+//       "media_id": "3305031090890187007",
+//       "comment_index": 0,
+//       "user": {
+//         "pk": "62557766374",
+//         "pk_id": "62557766374",
+//         "id": "62557766374",
+//         "username": "bih.hanaaa",
+//         "full_name": "𝒽𝒶𝓃𝒶 😌💅🏼",
+//         "is_private": false,
+//         "strong_id__": "62557766374",
+//         "fbid_v2": "17841462591239720",
+//         "is_verified": false,
+//         "profile_pic_id": "3326260052077200452_62557766374",
+//         "profile_pic_url": "https://instagram.fbru4-1.fna.fbcdn.net/v/t51.2885-19/433708442_1807347906433335_6368858596492965834_n.jpg?stp=dst-jpg_s150x150\u0026_nc_ht=instagram.fbru4-1.fna.fbcdn.net\u0026_nc_cat=103\u0026_nc_ohc=37m90T6KotQAb622SbA\u0026edm=AId3EpQBAAAA\u0026ccb=7-5\u0026oh=00_AfCp09ELgAwIrgd8GzMxWu0ZI43RPE_CNZEuQClTj9wq5A\u0026oe=6627731C\u0026_nc_sid=f5838a",
+//         "is_mentionable": true,
+//         "latest_reel_media": 0,
+//         "latest_besties_reel_media": 0
+//       },
+//       "text": "HOW MANY LETTERS DOES THE WORD \"DECEMBER\" HAVE??? 💅🏼✨🔥",
+//       "is_covered": true,
+//       "inline_composer_display_condition": "never",
+//       "has_liked_comment": false,
+//       "comment_like_count": 0,
+//       "preview_child_comments": [],
+//       "child_comment_count": 0,
+//       "other_preview_users": [],
+//       "private_reply_status": 0
+//     }
+//   ],
+//   "comment_count": 19,
+//   "caption": {
+//     "pk": "18011803037238607",
+//     "user_id": "62910638693",
+//     "type": 1,
+//     "did_report_as_spam": false,
+//     "created_at": 1708210431,
+//     "created_at_utc": 1708210431,
+//     "content_type": "comment",
+//     "status": "Active",
+//     "bit_flags": 0,
+//     "share_enabled": true,
+//     "is_ranked_comment": true,
+//     "media_id": "3305031090890187007",
+//     "is_created_by_media_owner": true,
+//     "user": {
+//       "pk": "62910638693",
+//       "pk_id": "62910638693",
+//       "id": "62910638693",
+//       "username": "dolltasy",
+//       "full_name": "dolltasy",
+//       "is_private": false,
+//       "strong_id__": "62910638693",
+//       "fbid_v2": "17841463080793829",
+//       "is_verified": false,
+//       "profile_pic_id": "3345558261660315202_62910638693",
+//       "profile_pic_url": "https://instagram.fbru4-1.fna.fbcdn.net/v/t51.2885-19/437303237_393529493643465_7086711369752110805_n.jpg?stp=dst-jpg_s150x150\u0026_nc_ht=instagram.fbru4-1.fna.fbcdn.net\u0026_nc_cat=1\u0026_nc_ohc=T3hKv2oI2FsAb4oB6VM\u0026edm=AId3EpQBAAAA\u0026ccb=7-5\u0026oh=00_AfBdUSJ-rOC7E2vnuBT7yXURuCrI6XbDcforIqmcxVoBXg\u0026oe=662756DC\u0026_nc_sid=f5838a"
+//     },
+//     "text": "☆",
+//     "is_covered": false,
+//     "private_reply_status": 0
+//   },
+//   "caption_is_edited": false,
+//   "has_more_comments": false,
+//   "has_more_headload_comments": true,
+//   "liked_by_media_owner_badge_enabled": true,
+//   "show_comments_for_you_demarcator": true,
+//   "preview_comments": [],
+//   "threading_enabled": true,
+//   "media_header_display": "none",
+//   "initiate_at_top": true,
+//   "insert_new_comment_to_top": true,
+//   "can_view_more_preview_comments": false,
+//   "next_min_id": "{\"bifilter_token\": \"KHkA4Xq4KHQCQADCGDCkVGo_AOa6r_jRuD8AZ25iSSu2PwCphrguAfs_AE05RJJh7z8Az0qsW-9rPwDSJSfBrOo_AJOlvd5bB0AA89ViA7dmQAB5hutyD-8_ADy_AFx5AkAA3QN_KwL4PwDei3jPzRJAAD8IoXjVmz8AAA==\"}",
+//   "scroll_behavior": 1,
+//   "comment_cover_pos": "bottom",
+//   "is_ranked": true,
+//   "comment_filter_param": "no_filter",
+//   "status": "ok"
+// }
+
+router.get("/:id/comments", async (req, res) => {
+  const { ds_user_id, sessionid } = req.cookies;
+
+  if (!ds_user_id || !sessionid) {
+    return res.status(401).json({
+      message: "Unauthorized",
+      status: "fail",
+      error_type: "authentication",
+    });
+  }
+
+  // Ensure user is authenticated
+  const user = await User.findOne({
+    userID: ds_user_id,
+    sessionID: sessionid,
+  }).exec();
+  if (!user) {
+    return res.status(401).json({
+      message: "Unauthorized",
+      status: "fail",
+      error_type: "authentication",
+    });
+  }
+
+  const post = await Post.findOne({ postID: req.params.id }).exec();
+
+  if (!post) {
+    return res.status(404).json({
+      status: "fail",
+      error_type: "post_not_found",
+    });
+  }
+
+  const comments = await Comment.find({ to: post.postID }).exec();
+
+  const commentsList = [];
+
+  const poster = await User.findOne({ userID: post.uploadedBy }).exec();
+
+  for (const comment of comments) {
+    const commenter = await User.findOne({ userID: comment.from }).exec();
+
+    const liked = await Like.findOne({
+      from: ds_user_id,
+      to: comment.id,
+      type: "comment",
+    }).exec();
+
+    commentsList.push({
+      pk: comment.id,
+      user_id: commenter.userID,
+      type: 0,
+      did_report_as_spam: false,
+      created_at: Math.floor(comment.createdAt.getTime() / 1000),
+      created_at_utc: Math.floor(comment.createdAt.getTime() / 1000),
+      content_type: "comment",
+      status: "Active",
+      bit_flags: 0,
+      share_enabled: true,
+      is_ranked_comment: true,
+      media_id: post.postID,
+      comment_index: 0,
+      user: {
+        pk: commenter.userID,
+        pk_id: commenter.userID,
+        id: commenter.userID,
+        username: commenter.username,
+        full_name: commenter.fullname,
+        is_private: commenter.private,
+        strong_id__: commenter.userID,
+        fbid_v2: commenter.userID,
+        is_verified: commenter.verified,
+        profile_pic_id: commenter.userID,
+        profile_pic_url: commenter.profilePicture,
+        is_mentionable: true,
+        latest_reel_media: 0,
+        latest_besties_reel_media: 0,
+      },
+      text: comment.content,
+      is_covered: true,
+      inline_composer_display_condition: "never",
+      has_liked_comment: liked ? true : false,
+      comment_like_count: comment.likes,
+      preview_child_comments: [],
+      child_comment_count: 0,
+      other_preview_users: [],
+      private_reply_status: 0,
+    });
+  }
+
+  res.json({
+    comment_likes_enabled: true,
+    comments: commentsList,
+    comment_count: commentsList.length,
+    caption: post.description
+      ? {
+          pk: post.postPK,
+          user_id: poster.userID,
+          type: 1,
+          did_report_as_spam: false,
+          created_at: Math.floor(post.createdAt.getTime() / 1000),
+          created_at_utc: Math.floor(post.createdAt.getTime() / 1000),
+          content_type: "comment",
+          status: "Active",
+          bit_flags: 0,
+          share_enabled: true,
+          is_ranked_comment: true,
+          media_id: post.postID,
+          is_created_by_media_owner: true,
+          user: {
+            pk: poster.userID,
+            pk_id: poster.userID,
+            id: poster.userID,
+            username: poster.username,
+            full_name: poster.fullname,
+            is_private: poster.private,
+            strong_id__: poster.userID,
+            fbid_v2: poster.userID,
+            is_verified: poster.verified,
+            profile_pic_id: poster.userID,
+            profile_pic_url: poster.profilePicture,
+          },
+          text: post.description,
+          is_covered: false,
+          private_reply_status: 0,
+        }
+      : null,
+    caption_is_edited: false,
+    has_more_comments: false,
+    has_more_headload_comments: true,
+    liked_by_media_owner_badge_enabled: true,
+    show_comments_for_you_demarcator: true,
+    preview_comments: [],
+    threading_enabled: true,
+    media_header_display: "none",
+    initiate_at_top: true,
+    insert_new_comment_to_top: true,
+    can_view_more_preview_comments: false,
+    next_min_id: "",
+    scroll_behavior: 1,
+    comment_cover_pos: "bottom",
+    is_ranked: true,
+    comment_filter_param: "no_filter",
+    status: "ok",
+  });
+});
+
+router.post("/:comment_id/comment_like", async (req, res) => {
+  const { ds_user_id, sessionid } = req.cookies;
+
+  if (!ds_user_id || !sessionid) {
+    return res.status(401).json({
+      message: "Unauthorized",
+      status: "fail",
+      error_type: "authentication",
+    });
+  }
+
+  // Ensure user is authenticated
+  const user = await User.findOne({
+    userID: ds_user_id,
+    sessionID: sessionid,
+  }).exec();
+  if (!user) {
+    return res.status(401).json({
+      message: "Unauthorized",
+      status: "fail",
+      error_type: "authentication",
+    });
+  }
+
+  const comment = await Comment.findOne({ id: req.params.comment_id }).exec();
+
+  if (!comment) {
+    return res.status(404).json({
+      status: "fail",
+      error_type: "comment_not_found",
+    });
+  }
+
+  const like = await Like.findOne({
+    from: ds_user_id,
+    to: comment.id,
+    type: "comment",
+  }).exec();
+
+  if (like) {
+    return res.status(400).json({
+      status: "fail",
+      error_type: "already_liked",
+    });
+  }
+
+  await Like.create({
+    from: user.userID,
+    to: comment.id,
+    type: "comment",
+  });
+
+  await Comment.updateOne({ id: comment.id }, { $inc: { likes: 1 } });
+
+  res.json({ status: "ok" });
+});
+
+// unlike comment, at /:comment_id/comment_unlike/
+router.post("/:comment_id/comment_unlike", async (req, res) => {
+  const { ds_user_id, sessionid } = req.cookies;
+
+  if (!ds_user_id || !sessionid) {
+    return res.status(401).json({
+      message: "Unauthorized",
+      status: "fail",
+      error_type: "authentication",
+    });
+  }
+
+  // Ensure user is authenticated
+  const user = await User.findOne({
+    userID: ds_user_id,
+    sessionID: sessionid,
+  }).exec();
+  if (!user) {
+    return res.status(401).json({
+      message: "Unauthorized",
+      status: "fail",
+      error_type: "authentication",
+    });
+  }
+
+  const comment = await Comment.findOne({ id: req.params.comment_id }).exec();
+
+  if (!comment) {
+    return res.status(404).json({
+      status: "fail",
+      error_type: "comment_not_found",
+    });
+  }
+
+  const like = await Like.findOne({
+    to: comment.id,
+    from: ds_user_id,
+    type: "comment",
+  }).exec();
+
+  if (!like) {
+    return res.status(400).json({
+      status: "fail",
+      error_type: "not_liked",
+    });
+  }
+
+  await Like.deleteOne({ to: comment.id, from: ds_user_id, type: "comment" });
+
+  await Comment.updateOne({ id: comment.id }, { $inc: { likes: -1 } });
+
+  res.json({ status: "ok" });
 });
 
 module.exports = router;
