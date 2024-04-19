@@ -4,6 +4,7 @@ const morgan = require("morgan");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const fs = require("fs");
+const config = require("./config.json");
 
 const app = express();
 const port = 3000;
@@ -12,6 +13,7 @@ dotenv.config();
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.set('trust proxy', 2);
 
 if (process.env.NODE_ENV === "production") {
   app.use(morgan("combined"));
@@ -19,19 +21,20 @@ if (process.env.NODE_ENV === "production") {
   app.use(morgan("dev"));
 }
 
-// connect to mongoose and console log the connection
-mongoose.connect("mongodb://localhost:27017/oldgram");
+const options = {
+  auth: {
+    username: process.env.MONGO_USER,
+    password: process.env.MONGO_PASS,
+  },
+};
 
-const db = mongoose.connection;
+mongoose
+  .connect(process.env.MONGO_URL, options)
+  .then(() => console.log("Connected to MongoDB"))
+  .catch((err) => console.error("Error connecting to MongoDB:", err));
 
-db.on("error", console.error.bind(console, "connection error:"));
-db.once("open", () => {
-  console.log("Connected to MongoDB");
-});
-
-app.use("/public", express.static(__dirname + '/public'));
+app.use("/public", express.static(__dirname + "/public"));
 app.use(require("./routes"));
-
 
 if (!fs.existsSync("public/photos")) {
   fs.mkdirSync("public/photos", { recursive: true });
@@ -40,10 +43,6 @@ if (!fs.existsSync("public/photos")) {
 if (!fs.existsSync("public/profilePictures")) {
   fs.mkdirSync("public/profilePictures", { recursive: true });
 }
-
-app.get("/api/v2/status", (req, res) => {
-  res.send("Oldgram API is running!");
-});
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
