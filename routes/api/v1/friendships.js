@@ -1,8 +1,12 @@
 const express = require("express");
+const multer = require("multer");
 const router = express.Router();
 
 const User = require("../../../models/User");
 const Follow = require("../../../models/Follow");
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 const auth = require("../../../middleware/auth");
 
@@ -215,13 +219,13 @@ router.get("/:id/followers", auth, async (req, res) => {
   for (const follower of followers) {
     const user = await User.findOne({ userID: follower.from }).exec();
     followersList.push({
-      pk: user.userID,
+      pk: parseInt(user.userID),
       pk_id: user.userID,
       id: user.userID,
       username: user.username,
       full_name: user.fullname,
       is_private: user.private,
-      fbid_v2: user.userID,
+      fbid_v2: parseInt(user.userID),
       third_party_downloads_enabled: 0,
       strong_id__: user.userID,
       profile_pic_id: "3336601179441187388_62995714406",
@@ -234,8 +238,9 @@ router.get("/:id/followers", auth, async (req, res) => {
   }
 
   res.json({
+    sections: [{ users: followersList }],
     users: followersList,
-    has_more: true,
+    has_more: false,
     status: "ok",
   });
 });
@@ -252,13 +257,13 @@ router.get("/:id/following", auth, async (req, res) => {
   for (const followed of following) {
     const user = await User.findOne({ userID: followed.to }).exec();
     followingList.push({
-      pk: user.userID,
+      pk: parseInt(user.userID),
       pk_id: user.userID,
       id: user.userID,
       username: user.username,
       full_name: user.fullname,
       is_private: user.private,
-      fbid_v2: user.userID,
+      fbid_v2: parseInt(user.userID),
       third_party_downloads_enabled: 0,
       strong_id__: user.userID,
       profile_pic_id: "3336601179441187388_62995714406",
@@ -271,53 +276,61 @@ router.get("/:id/following", auth, async (req, res) => {
   }
 
   res.json({
+    sections: [{ users: followingList }],
     users: followingList,
-    has_more: true,
+    has_more: false,
     status: "ok",
   });
 });
 
-router.all("/show_many", auth, async (req, res) => {
-  const accountId = req.cookies.ds_user_id;
+router.all("/show_many", upload.none(), auth, async (req, res) => {
+  try {
+    const accountId = req.cookies.ds_user_id;
 
-  let userIDs;
-
-  if (!req.query.user_ids) {
-    // get all the following of the authenticated user
-    const following = await Follow.find({ from: accountId }).exec();
-    userIDs = following.map((follow) => follow.to);
-  } else {
-    userIDs = req.query.user_ids.split(",");
+    let userIDs;
+    
+    if (!req.body.user_ids) {
+      const following = await Follow.find({ from: accountId }).exec();
+      userIDs = following.map((follow) => follow.to);
+    } else {
+      userIDs = req.body.user_ids.split(",");
+    }
+  
+    const friendshipStatuses = {};
+  
+    for (const id of userIDs) {
+      const follow = await Follow.findOne({
+        from: accountId,
+        to: id,
+      }).exec();
+  
+      const followedBy = await Follow.findOne({
+        from: id,
+        to: accountId,
+      }).exec();
+  
+      friendshipStatuses[id] = {
+        following: follow ? true : false,
+        incoming_request: false,
+        is_bestie: false,
+        is_private: false,
+        is_restricted: false,
+        outgoing_request: false,
+        is_feed_favorite: false,
+      };
+    }
+  
+    res.json({
+      friendship_statuses: friendshipStatuses,
+      status: "ok",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      status: "fail",
+      error_type: "generic_request_error",
+    });
   }
-
-  const friendshipStatuses = {};
-
-  for (const id of userIDs) {
-    const follow = await Follow.findOne({
-      from: accountId,
-      to: id,
-    }).exec();
-
-    const followedBy = await Follow.findOne({
-      from: id,
-      to: accountId,
-    }).exec();
-
-    friendshipStatuses[id] = {
-      following: follow ? true : false,
-      incoming_request: false,
-      is_bestie: false,
-      is_private: false,
-      is_restricted: false,
-      outgoing_request: false,
-      is_feed_favorite: false,
-    };
-  }
-
-  res.json({
-    friendship_statuses: friendshipStatuses,
-    status: "ok",
-  });
 });
 
 module.exports = router;

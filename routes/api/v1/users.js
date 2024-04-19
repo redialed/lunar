@@ -403,7 +403,7 @@ router.get("/search", auth, async (req, res) => {
 
   const query = req.query.q;
 
-  const users = await User.find({ username: { $regex: query, $options: "i" } });
+  const users = await User.find({ username: { $regex: query, $options: "i" } }).limit(50);
 
   const response = {
     num_results: users.length,
