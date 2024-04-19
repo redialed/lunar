@@ -8,5 +8,6 @@ router.use('/media', require('./media'));
 router.use('/feed', require('./feed'));
 router.use('/friendships', require('./friendships'));
 router.use('/news', require('./news'));
+router.use('/fbsearch', require('./fbsearch'));
 
 module.exports = router;
