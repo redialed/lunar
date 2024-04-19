@@ -541,6 +541,63 @@ router.post('/change_profile_picture', upload.single('profile_pic'), auth, async
   }
 });
 
+// remove_profile_picture puts the default profile picture
+router.post('/remove_profile_picture', auth, async (req, res) => {
+  try {
+      const { ds_user_id, sessionid } = req.cookies;
+
+      const account = await User.findOne({ userID: ds_user_id, sessionID: sessionid }).exec();
+
+      await User.updateOne({ userID: account.userID }, { profilePicture: config.host + 'public/profilePictures/default.png' });
+
+      // Reply with the updated user information
+      const response = {
+        user: {
+          biography: account.biography,
+          full_name: account.fullname,
+          gender: 3,
+          is_private: account.private,
+          pk: account.userID,
+          pk_id: account.userID,
+          strong_id__: account.userID,
+          external_url: account.website,
+          email: account.email,
+          has_anonymous_profile_picture: false,
+          hd_profile_pic_url_info: {
+            url: "",
+            width: 1080,
+            height: 1080,
+          },
+          hd_profile_pic_versions: [
+            {
+              width: 320,
+              height: 320,
+              url: account.profilePicture,
+            },
+            {
+              width: 640,
+              height: 640,
+              url: account.profilePicture,
+            },
+          ],
+          is_verified: account.verified,
+          phone_number: "",
+          profile_pic_id: "1",
+          profile_pic_url: account.profilePicture,
+          trusted_username: account.username,
+          trust_days: 0,
+          username: account.username,
+        },
+        status: "ok",
+      };
+
+      res.json(response);
+  } catch (error) {
+      console.error('Error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 router.post("/logout", auth, async (req, res) => {
   res.json({ status: "ok" });
 });
