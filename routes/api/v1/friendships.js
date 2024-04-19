@@ -62,7 +62,7 @@ router.get("/show/:id", async (req, res) => {
   });
 });
 
-router.post("/create/:id", async (req, res) => {
+router.all("/create/:id", async (req, res) => {
   try {
     const accountId = req.cookies.ds_user_id;
     const sessionID = req.cookies.sessionid;
@@ -160,7 +160,7 @@ router.post("/create/:id", async (req, res) => {
   }
 });
 
-router.post("/destroy/:id", async (req, res) => {
+router.all("/destroy/:id", async (req, res) => {
   try {
     const accountId = req.cookies.ds_user_id;
     const sessionID = req.cookies.sessionid;
@@ -365,58 +365,66 @@ router.get("/:id/following", async (req, res) => {
     });
 });
 
-router.post("/show_many", async (req, res) => {
-    const accountId = req.cookies.ds_user_id;
-    const sessionID = req.cookies.sessionid;
+router.all("/show_many", async (req, res) => {
+  const accountId = req.cookies.ds_user_id;
+  const sessionID = req.cookies.sessionid;
 
-    if (!accountId || !sessionID) {
-      return res.status(401).json({
-        message: "Unauthorized",
-        status: "fail",
-        error_type: "authentication",
-      });
-    }
-
-    // Ensure user is authenticated
-    const user = await User.findOne({ userID: accountId, sessionID }).exec();
-    if (!user) {
-      return res.status(401).json({
-        message: "Unauthorized",
-        status: "fail",
-        error_type: "authentication",
-      });
-    }
-
-    const userIDs = req.body.user_ids.split(",");
-
-    const friendshipStatuses = {};
-
-    for (const id of userIDs) {
-        const follow = await Follow.findOne({
-            from: accountId,
-            to: id,
-        }).exec();
-
-        const followedBy = await Follow.findOne({
-            from: id,
-            to: accountId,
-        }).exec();
-
-        friendshipStatuses[id] = {
-            following: follow ? true : false,
-            incoming_request: false,
-            is_bestie: false,
-            is_private: false,
-            is_restricted: false,
-            outgoing_request: false,
-            is_feed_favorite: false,
-        };
-    }
-
-    res.json({
-        friendship_statuses: friendshipStatuses,
-        status: "ok",
+  if (!accountId || !sessionID) {
+    return res.status(401).json({
+      message: "Unauthorized",
+      status: "fail",
+      error_type: "authentication",
     });
+  }
+
+  // Ensure user is authenticated
+  const user = await User.findOne({ userID: accountId, sessionID }).exec();
+  if (!user) {
+    return res.status(401).json({
+      message: "Unauthorized",
+      status: "fail",
+      error_type: "authentication",
+    });
+  }
+
+  let userIDs
+
+  if (!req.query.user_ids) {
+    // get all the following of the authenticated user
+    const following = await Follow.find({ from: accountId }).exec();
+    userIDs = following.map((follow) => follow.to);
+  } else {
+    userIDs = req.query.user_ids.split(",");
+  }
+
+  const friendshipStatuses = {};
+
+  for (const id of userIDs) {
+      const follow = await Follow.findOne({
+          from: accountId,
+          to: id,
+      }).exec();
+
+      const followedBy = await Follow.findOne({
+          from: id,
+          to: accountId,
+      }).exec();
+
+      friendshipStatuses[id] = {
+          following: follow ? true : false,
+          incoming_request: false,
+          is_bestie: false,
+          is_private: false,
+          is_restricted: false,
+          outgoing_request: false,
+          is_feed_favorite: false,
+      };
+  }
+
+  res.json({
+      friendship_statuses: friendshipStatuses,
+      status: "ok",
+  });
 });
 
 module.exports = router;
