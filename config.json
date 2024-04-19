@@ -1,4 +1,5 @@
 {
-    "host": "http://localhost:3000/",
-    "autoFollowList": ["3905206957", "1"]
+    "host": "https://localhost:3000/",
+    "autoFollowList": ["2102712271"],
+    "reservedUsernames": ["lunar"]
 }

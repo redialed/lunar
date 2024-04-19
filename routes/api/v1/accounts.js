@@ -181,6 +181,17 @@ router.post("/create", upload.single('profile_pic'), async (req, res) => {
       });
     }
 
+    // Check config to see if the username is in the reserved list (config.reservedUsernames)
+    if (config.reservedUsernames.includes(username)) {
+      return res.status(400).json({
+        errors: {
+          error: ["This username is reserved!"],
+        },
+        status: "ok",
+        error_type: "generic_request_error",
+      });
+    }
+
     function generateUserId() {
       const min = 1000000000;
       const max = 9999999999;
