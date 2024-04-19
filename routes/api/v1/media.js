@@ -590,8 +590,7 @@ router.get("/:id/comments", auth, async (req, res) => {
       type: "comment",
     }).exec();
 
-    // count comment likes
-    const likes = await Like.find({ to: comment.id, type: "comment" }).exec();
+    const likes = await Like.find({ to: comment.id, type: "comment" }).countDocuments().exec();
 
     commentsList.push({
       pk: comment.id,
