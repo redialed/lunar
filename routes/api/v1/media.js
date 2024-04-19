@@ -39,7 +39,6 @@ router.post("/configure", auth, async (req, res) => {
       { originalUploadID: upload_id, originalUUID: uuid },
       { description: caption }
     );
-    await User.updateOne({ userID: ds_user_id }, { $inc: { photoCount: 1 } });
 
     // get post info
     const post = await Post.findOne({

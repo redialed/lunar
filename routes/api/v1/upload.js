@@ -70,6 +70,8 @@ router.post("/photo", upload.single("photo"), auth, async (req, res) => {
       isVideo: isVideo,
     });
 
+    await User.updateOne({ userID: ds_user_id }, { $inc: { photoCount: 1 } });
+
     const photoURL = config.host + `public/photos/${account.userID}/${postID}.png`;
     newPost.mediaURL = photoURL;
     const photoURI = `public/photos/${account.userID}/${postID}.png`;

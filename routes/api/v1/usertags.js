@@ -3,7 +3,7 @@ const router = express.Router();
 
 const auth = require("../../../middleware/auth");
 
-router.get("/:type", auth, async (req, res) => {
+router.get("/:id/feed", auth, async (req, res) => {
     const response = {
         "items": [],
         "num_results": 0,

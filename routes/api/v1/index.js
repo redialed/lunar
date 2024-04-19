@@ -10,5 +10,6 @@ router.use('/friendships', require('./friendships'));
 router.use('/news', require('./news'));
 router.use('/fbsearch', require('./fbsearch'));
 router.use('/discover', require('./discover'));
+router.use('/usertags', require('./usertags'));
 
 module.exports = router;
