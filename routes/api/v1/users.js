@@ -7,6 +7,8 @@ const User = require("../../../models/User");
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
+const auth = require("../../../middleware/auth");
+
 router.post("/check_email", upload.none(), async (req, res) => {
   const signedBody = req.body.signed_body;
 
@@ -50,28 +52,8 @@ router.post("/check_email", upload.none(), async (req, res) => {
   }
 });
 
-router.get("/:id/info", async (req, res) => {
+router.get("/:id/info", auth, async (req, res) => {
   try {
-    const { ds_user_id, sessionid } = req.cookies;
-
-    if (!ds_user_id || !sessionid) {
-      return res.status(401).json({
-        message: "Unauthorized",
-        status: "fail",
-        error_type: "authentication",
-      });
-    }
-  
-    // Ensure user is authenticated
-    const userAuth = await User.findOne({ userID: ds_user_id, sessionID: sessionid }).exec();
-    if (!userAuth) {
-      return res.status(401).json({
-        message: "Unauthorized",
-        status: "fail",
-        error_type: "authentication",
-      });
-    }
-
     const id = req.params.id;
     const user = await User.findOne({ userID: id }).exec();
 
@@ -246,27 +228,7 @@ router.get("/:id/info", async (req, res) => {
   }
 });
 
-router.get("/:username/usernameinfo", async (req, res) => {
-  const { ds_user_id, sessionid } = req.cookies;
-
-  if (!ds_user_id || !sessionid) {
-    return res.status(401).json({
-      message: "Unauthorized",
-      status: "fail",
-      error_type: "authentication",
-    });
-  }
-
-  // Ensure user is authenticated
-  const userAuth = await User.findOne({ userID: ds_user_id, sessionID: sessionid }).exec();
-  if (!userAuth) {
-    return res.status(401).json({
-      message: "Unauthorized",
-      status: "fail",
-      error_type: "authentication",
-    });
-  }
-
+router.get("/:username/usernameinfo", auth, async (req, res) => {
   const username = req.params.username;
 
   const user = await User.findOne({ username });
@@ -436,26 +398,8 @@ router.get("/:username/usernameinfo", async (req, res) => {
   }
 });
 
-router.get("/search", async (req, res) => {
+router.get("/search", auth, async (req, res) => {
   const { ds_user_id, sessionid } = req.cookies;
-
-  if (!ds_user_id || !sessionid) {
-    return res.status(401).json({
-      message: "Unauthorized",
-      status: "fail",
-      error_type: "authentication",
-    });
-  }
-
-  // Ensure user is authenticated
-  const user = await User.findOne({ userID: ds_user_id, sessionID: sessionid }).exec();
-  if (!user) {
-    return res.status(401).json({
-      message: "Unauthorized",
-      status: "fail",
-      error_type: "authentication",
-    });
-  }
 
   const query = req.query.q;
 

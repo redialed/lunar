@@ -1,7 +1,9 @@
 const express = require("express");
 const router = express.Router();
 
-router.get("/inbox", (req, res) => {
+const auth = require("../../../middleware/auth");
+
+router.get("/inbox", auth, (req, res) => {
   const response = {
     counts: {
       relationships: 0,

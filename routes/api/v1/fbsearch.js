@@ -1,7 +1,9 @@
 const express = require("express");
 const router = express.Router();
 
-router.get("/topsearch", (req, res) => {
+const auth = require("../../../middleware/auth");
+
+router.get("/topsearch", auth, (req, res) => {
   const response = {
     status: "fail",
   };

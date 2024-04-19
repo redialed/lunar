@@ -7,28 +7,11 @@ const Post = require("../../../models/Post");
 const Follow = require("../../../models/Follow");
 const Like = require("../../../models/Like");
 
-router.get("/user/:id", async (req, res) => {
+const auth = require("../../../middleware/auth");
+
+router.get("/user/:id", auth, async (req, res) => {
   try {
     const accountId = req.cookies.ds_user_id;
-    const sessionID = req.cookies.sessionid;
-
-    if (!accountId || !sessionID) {
-      return res.status(401).json({
-        message: "Unauthorized",
-        status: "fail",
-        error_type: "authentication",
-      });
-    }
-
-    // Ensure user is authenticated
-    const user = await User.findOne({ userID: accountId, sessionID }).exec();
-    if (!user) {
-      return res.status(401).json({
-        message: "Unauthorized",
-        status: "fail",
-        error_type: "authentication",
-      });
-    }
 
     const id = req.params.id;
 
@@ -302,27 +285,9 @@ router.get("/user/:id", async (req, res) => {
   }
 });
 
-router.post("/timeline", async (req, res) => {
+router.post("/timeline", auth, async (req, res) => {
   try {
-    const { ds_user_id, sessionid } = req.cookies;
-
-    if (!ds_user_id || !sessionid) {
-      return res.status(401).json({
-        message: "Unauthorized",
-        status: "fail",
-        error_type: "authentication",
-      });
-    }
-
-    // Ensure user is authenticated
-    const user = await User.findOne({ userID: ds_user_id, sessionID: sessionid }).exec();
-    if (!user) {
-      return res.status(401).json({
-        message: "Unauthorized",
-        status: "fail",
-        error_type: "authentication",
-      });
-    }
+    const { ds_user_id } = req.cookies;
 
     const account = await User.findOne({ userID: ds_user_id });
     if (!account) {
@@ -578,27 +543,9 @@ router.post("/timeline", async (req, res) => {
   }
 });
 
-router.get("/timeline", async (req, res) => {
+router.get("/timeline", auth, async (req, res) => {
   try {
     const { ds_user_id, sessionid } = req.cookies;
-
-    if (!ds_user_id || !sessionid) {
-      return res.status(401).json({
-        message: "Unauthorized",
-        status: "fail",
-        error_type: "authentication",
-      });
-    }
-
-    // Ensure user is authenticated
-    const user = await User.findOne({ userID: ds_user_id, sessionID: sessionid }).exec();
-    if (!user) {
-      return res.status(401).json({
-        message: "Unauthorized",
-        status: "fail",
-        error_type: "authentication",
-      });
-    }
 
     const account = await User.findOne({ userID: ds_user_id });
     if (!account) {

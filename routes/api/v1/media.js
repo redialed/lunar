@@ -7,30 +7,16 @@ const Like = require("../../../models/Like");
 const Follow = require("../../../models/Follow");
 const Comment = require("../../../models/Comment");
 
-router.post("/configure", async (req, res) => {
+const auth = require("../../../middleware/auth");
+
+router.post("/configure", auth, async (req, res) => {
   try {
     const { ds_user_id, sessionid } = req.cookies;
 
-    if (!ds_user_id || !sessionid) {
-      return res.status(401).json({
-        message: "Unauthorized",
-        status: "fail",
-        error_type: "authentication",
-      });
-    }
-
-    // Ensure user is authenticated
     const user = await User.findOne({
       userID: ds_user_id,
       sessionID: sessionid,
     }).exec();
-    if (!user) {
-      return res.status(401).json({
-        message: "Unauthorized",
-        status: "fail",
-        error_type: "authentication",
-      });
-    }
 
     const { signed_body } = req.body;
     let device_timestamp;
@@ -313,29 +299,14 @@ router.post("/configure", async (req, res) => {
   }
 });
 
-router.post("/:id/like", async (req, res) => {
+router.post("/:id/like", auth, async (req, res) => {
   const { ds_user_id, sessionid } = req.cookies;
-
-  if (!ds_user_id || !sessionid) {
-    return res.status(401).json({
-      message: "Unauthorized",
-      status: "fail",
-      error_type: "authentication",
-    });
-  }
 
   // Ensure user is authenticated
   const user = await User.findOne({
     userID: ds_user_id,
     sessionID: sessionid,
   }).exec();
-  if (!user) {
-    return res.status(401).json({
-      message: "Unauthorized",
-      status: "fail",
-      error_type: "authentication",
-    });
-  }
 
   const post = await Post.findOne({ postID: req.params.id }).exec();
 
@@ -371,29 +342,14 @@ router.post("/:id/like", async (req, res) => {
   res.json({ status: "ok" });
 });
 
-router.post("/:id/unlike", async (req, res) => {
+router.post("/:id/unlike", auth, async (req, res) => {
   const { ds_user_id, sessionid } = req.cookies;
-
-  if (!ds_user_id || !sessionid) {
-    return res.status(401).json({
-      message: "Unauthorized",
-      status: "fail",
-      error_type: "authentication",
-    });
-  }
 
   // Ensure user is authenticated
   const user = await User.findOne({
     userID: ds_user_id,
     sessionID: sessionid,
   }).exec();
-  if (!user) {
-    return res.status(401).json({
-      message: "Unauthorized",
-      status: "fail",
-      error_type: "authentication",
-    });
-  }
 
   const post = await Post.findOne({ postID: req.params.id }).exec();
 
@@ -424,29 +380,8 @@ router.post("/:id/unlike", async (req, res) => {
   res.json({ status: "ok" });
 });
 
-router.get("/:id/likers", async (req, res) => {
+router.get("/:id/likers", auth, async (req, res) => {
   const { ds_user_id, sessionid } = req.cookies;
-
-  if (!ds_user_id || !sessionid) {
-    return res.status(401).json({
-      message: "Unauthorized",
-      status: "fail",
-      error_type: "authentication",
-    });
-  }
-
-  // Ensure user is authenticated
-  const user = await User.findOne({
-    userID: ds_user_id,
-    sessionID: sessionid,
-  }).exec();
-  if (!user) {
-    return res.status(401).json({
-      message: "Unauthorized",
-      status: "fail",
-      error_type: "authentication",
-    });
-  }
 
   // Ensure post exists
   const post = await Post.findOne({ postID: req.params.id }).exec();
@@ -516,29 +451,13 @@ router.get("/:id/likers", async (req, res) => {
   });
 });
 
-router.post("/:id/delete", async (req, res) => {
+router.post("/:id/delete", auth, async (req, res) => {
   const { ds_user_id, sessionid } = req.cookies;
 
-  if (!ds_user_id || !sessionid) {
-    return res.status(401).json({
-      message: "Unauthorized",
-      status: "fail",
-      error_type: "authentication",
-    });
-  }
-
-  // Ensure user is authenticated
   const user = await User.findOne({
     userID: ds_user_id,
     sessionID: sessionid,
   }).exec();
-  if (!user) {
-    return res.status(401).json({
-      message: "Unauthorized",
-      status: "fail",
-      error_type: "authentication",
-    });
-  }
 
   try {
     const post = await Post.findOne({ postID: req.params.id }).exec();
@@ -574,29 +493,13 @@ router.post("/:id/delete", async (req, res) => {
   }
 });
 
-router.post("/:id/comment", async (req, res) => {
+router.post("/:id/comment", auth, async (req, res) => {
   const { ds_user_id, sessionid } = req.cookies;
 
-  if (!ds_user_id || !sessionid) {
-    return res.status(401).json({
-      message: "Unauthorized",
-      status: "fail",
-      error_type: "authentication",
-    });
-  }
-
-  // Ensure user is authenticated
   const user = await User.findOne({
     userID: ds_user_id,
     sessionID: sessionid,
   }).exec();
-  if (!user) {
-    return res.status(401).json({
-      message: "Unauthorized",
-      status: "fail",
-      error_type: "authentication",
-    });
-  }
 
   const signedBody = req.body.signed_body;
 
@@ -661,29 +564,8 @@ router.post("/:id/comment", async (req, res) => {
   });
 });
 
-router.get("/:id/comments", async (req, res) => {
+router.get("/:id/comments", auth, async (req, res) => {
   const { ds_user_id, sessionid } = req.cookies;
-
-  if (!ds_user_id || !sessionid) {
-    return res.status(401).json({
-      message: "Unauthorized",
-      status: "fail",
-      error_type: "authentication",
-    });
-  }
-
-  // Ensure user is authenticated
-  const user = await User.findOne({
-    userID: ds_user_id,
-    sessionID: sessionid,
-  }).exec();
-  if (!user) {
-    return res.status(401).json({
-      message: "Unauthorized",
-      status: "fail",
-      error_type: "authentication",
-    });
-  }
 
   const post = await Post.findOne({ postID: req.params.id }).exec();
 
@@ -808,29 +690,13 @@ router.get("/:id/comments", async (req, res) => {
   });
 });
 
-router.post("/:comment_id/comment_like", async (req, res) => {
+router.post("/:comment_id/comment_like", auth, async (req, res) => {
   const { ds_user_id, sessionid } = req.cookies;
 
-  if (!ds_user_id || !sessionid) {
-    return res.status(401).json({
-      message: "Unauthorized",
-      status: "fail",
-      error_type: "authentication",
-    });
-  }
-
-  // Ensure user is authenticated
   const user = await User.findOne({
     userID: ds_user_id,
     sessionID: sessionid,
   }).exec();
-  if (!user) {
-    return res.status(401).json({
-      message: "Unauthorized",
-      status: "fail",
-      error_type: "authentication",
-    });
-  }
 
   const comment = await Comment.findOne({ id: req.params.comment_id }).exec();
 
@@ -868,30 +734,8 @@ router.post("/:comment_id/comment_like", async (req, res) => {
   res.json({ status: "ok" });
 });
 
-// unlike comment, at /:comment_id/comment_unlike/
-router.post("/:comment_id/comment_unlike", async (req, res) => {
+router.post("/:comment_id/comment_unlike", auth, async (req, res) => {
   const { ds_user_id, sessionid } = req.cookies;
-
-  if (!ds_user_id || !sessionid) {
-    return res.status(401).json({
-      message: "Unauthorized",
-      status: "fail",
-      error_type: "authentication",
-    });
-  }
-
-  // Ensure user is authenticated
-  const user = await User.findOne({
-    userID: ds_user_id,
-    sessionID: sessionid,
-  }).exec();
-  if (!user) {
-    return res.status(401).json({
-      message: "Unauthorized",
-      status: "fail",
-      error_type: "authentication",
-    });
-  }
 
   const comment = await Comment.findOne({ id: req.params.comment_id }).exec();
 
@@ -922,30 +766,8 @@ router.post("/:comment_id/comment_unlike", async (req, res) => {
   res.json({ status: "ok" });
 });
 
-// get all the likers for a comment, at /:comment_id/comment_likers/
-router.get("/:comment_id/comment_likers", async (req, res) => {
+router.get("/:comment_id/comment_likers", auth, async (req, res) => {
   const { ds_user_id, sessionid } = req.cookies;
-
-  if (!ds_user_id || !sessionid) {
-    return res.status(401).json({
-      message: "Unauthorized",
-      status: "fail",
-      error_type: "authentication",
-    });
-  }
-
-  // Ensure user is authenticated
-  const user = await User.findOne({
-    userID: ds_user_id,
-    sessionID: sessionid,
-  }).exec();
-  if (!user) {
-    return res.status(401).json({
-      message: "Unauthorized",
-      status: "fail",
-      error_type: "authentication",
-    });
-  }
 
   const comment = await Comment.findOne({ id: req.params.comment_id }).exec();
 
@@ -1014,30 +836,13 @@ router.get("/:comment_id/comment_likers", async (req, res) => {
   });
 });
 
-// to delete comments, you need to bulk_delete, at /:post_id/bulk_delete/, use the signed_body to get the comment ids at "comment_ids_to_delete" which looks like this "comment_ids_to_delete":"41170547176752390,14034266993572340", make sure before deleting that the person deleting it owns all the comments or owns the post itself
-router.post("/:post_id/comment/bulk_delete", async (req, res) => {
+router.post("/:post_id/comment/bulk_delete", auth, async (req, res) => {
   const { ds_user_id, sessionid } = req.cookies;
 
-  if (!ds_user_id || !sessionid) {
-    return res.status(401).json({
-      message: "Unauthorized",
-      status: "fail",
-      error_type: "authentication",
-    });
-  }
-
-  // Ensure user is authenticated
   const user = await User.findOne({
     userID: ds_user_id,
     sessionID: sessionid,
   }).exec();
-  if (!user) {
-    return res.status(401).json({
-      message: "Unauthorized",
-      status: "fail",
-      error_type: "authentication",
-    });
-  }
 
   const signedBody = req.body.signed_body;
 
@@ -1079,7 +884,7 @@ router.post("/:post_id/comment/bulk_delete", async (req, res) => {
       });
     }
 
-    console.log(post.uploadedBy, user.userID, comment.from, user.userID)
+    console.log(post.uploadedBy, user.userID, comment.from, user.userID);
 
     if (post.uploadedBy !== user.userID && comment.from !== user.userID) {
       return res.status(403).json({

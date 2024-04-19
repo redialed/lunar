@@ -11,6 +11,8 @@ const User = require("../../../models/User");
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
+const auth = require("../../../middleware/auth");
+
 router.post("/login", async (req, res) => {
   const signedBody = req.body.signed_body;
 
@@ -263,28 +265,9 @@ router.post("/username_suggestions", async (req, res) => {
   });
 });
 
-router.get("/current_user", async (req, res) => {
+router.get("/current_user", auth, async (req, res) => {
   try {
     const accountId = req.cookies.ds_user_id;
-    const sessionID = req.cookies.sessionid;
-
-    if (!accountId || !sessionID) {
-      return res.status(401).json({
-        message: "Unauthorized",
-        status: "fail",
-        error_type: "authentication",
-      });
-    }
-
-    // Ensure user is authenticated
-    const userAuth = await User.findOne({ userID: accountId, sessionID }).exec();
-    if (!userAuth) {
-      return res.status(401).json({
-        message: "Unauthorized",
-        status: "fail",
-        error_type: "authentication",
-      });
-    }
 
     const user = await User.findOne({ userID: accountId }).exec();
 
@@ -397,28 +380,9 @@ router.get("/current_user", async (req, res) => {
   }
 });
 
-router.post("/edit_profile", async (req, res) => {
+router.post("/edit_profile", auth, async (req, res) => {
   try {
     const accountId = req.cookies.ds_user_id;
-    const sessionID = req.cookies.sessionid;
-
-    if (!accountId || !sessionID) {
-      return res.status(401).json({
-        message: "Unauthorized",
-        status: "fail",
-        error_type: "authentication",
-      });
-    }
-
-    // Ensure user is authenticated
-    const userAuth = await User.findOne({ userID: accountId, sessionID }).exec();
-    if (!userAuth) {
-      return res.status(401).json({
-        message: "Unauthorized",
-        status: "fail",
-        error_type: "authentication",
-      });
-    }
 
     const user = await User.findOne({ userID: accountId }).exec();
 
@@ -499,27 +463,11 @@ router.post("/edit_profile", async (req, res) => {
   }
 });
 
-router.post('/change_profile_picture', upload.single('profile_pic'), async (req, res) => {
+router.post('/change_profile_picture', upload.single('profile_pic'), auth, async (req, res) => {
   try {
       const { ds_user_id, sessionid } = req.cookies;
 
-      if (!ds_user_id || !sessionid) {
-          return res.status(401).json({
-              message: 'Unauthorized',
-              status: 'fail',
-              error_type: 'authentication',
-          });
-      }
-
-      // Ensure user is authenticated
       const account = await User.findOne({ userID: ds_user_id, sessionID: sessionid }).exec();
-      if (!account) {
-          return res.status(401).json({
-              message: 'Unauthorized',
-              status: 'fail',
-              error_type: 'authentication',
-          });
-      }
 
       function generateId(length) {
         const min = Math.pow(10, length - 1);
@@ -593,7 +541,7 @@ router.post('/change_profile_picture', upload.single('profile_pic'), async (req,
   }
 });
 
-router.post("/logout", async (req, res) => {
+router.post("/logout", auth, async (req, res) => {
   res.json({ status: "ok" });
 });
 

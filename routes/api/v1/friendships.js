@@ -4,27 +4,10 @@ const router = express.Router();
 const User = require("../../../models/User");
 const Follow = require("../../../models/Follow");
 
-router.get("/show/:id", async (req, res) => {
-    const accountId = req.cookies.ds_user_id;
-    const sessionID = req.cookies.sessionid;
+const auth = require("../../../middleware/auth");
 
-    if (!accountId || !sessionID) {
-      return res.status(401).json({
-        message: "Unauthorized",
-        status: "fail",
-        error_type: "authentication",
-      });
-    }
-
-    // Ensure user is authenticated
-    const user = await User.findOne({ userID: accountId, sessionID }).exec();
-    if (!user) {
-      return res.status(401).json({
-        message: "Unauthorized",
-        status: "fail",
-        error_type: "authentication",
-      });
-    }
+router.get("/show/:id", auth, async (req, res) => {
+  const accountId = req.cookies.ds_user_id;
 
   const idToLookup = req.params.id;
 
@@ -62,32 +45,15 @@ router.get("/show/:id", async (req, res) => {
   });
 });
 
-router.all("/create/:id", async (req, res) => {
+router.all("/create/:id", auth, async (req, res) => {
   try {
     const accountId = req.cookies.ds_user_id;
     const sessionID = req.cookies.sessionid;
 
-    if (!accountId || !sessionID) {
-      return res.status(401).json({
-        message: "Unauthorized",
-        status: "fail",
-        error_type: "authentication",
-      });
-    }
-
-    // Ensure user is authenticated
     const user = await User.findOne({ userID: accountId, sessionID }).exec();
-    if (!user) {
-      return res.status(401).json({
-        message: "Unauthorized",
-        status: "fail",
-        error_type: "authentication",
-      });
-    }
 
     const idToFollow = req.params.id;
 
-    // check if user to follow exists
     const userToFollow = await User.findOne({ userID: idToFollow }).exec();
     if (!userToFollow) {
       return res.status(404).json({
@@ -160,37 +126,21 @@ router.all("/create/:id", async (req, res) => {
   }
 });
 
-router.all("/destroy/:id", async (req, res) => {
+router.all("/destroy/:id", auth, async (req, res) => {
   try {
     const accountId = req.cookies.ds_user_id;
     const sessionID = req.cookies.sessionid;
 
-    if (!accountId || !sessionID) {
-      return res.status(401).json({
-        message: "Unauthorized",
-        status: "fail",
-        error_type: "authentication",
-      });
-    }
-
-    // Ensure user is authenticated
     const user = await User.findOne({ userID: accountId, sessionID }).exec();
-    if (!user) {
-      return res.status(401).json({
-        message: "Unauthorized",
-        status: "fail",
-        error_type: "authentication",
-      });
-    }
 
     const idToUnfollow = req.params.id;
 
     const userToUnfollow = await User.findOne({ userID: idToUnfollow }).exec();
     if (!userToUnfollow) {
-        return res.status(404).json({
-            status: "fail",
-            error_type: "user_not_found",
-            });
+      return res.status(404).json({
+        status: "fail",
+        error_type: "user_not_found",
+      });
     }
 
     if (accountId === idToUnfollow) {
@@ -253,141 +203,84 @@ router.all("/destroy/:id", async (req, res) => {
   }
 });
 
-router.get("/:id/followers", async (req, res) => {
-    const accountId = req.cookies.ds_user_id;
-    const sessionID = req.cookies.sessionid;
+router.get("/:id/followers", auth, async (req, res) => {
+  const idToLookup = req.params.id;
 
-    if (!accountId || !sessionID) {
-      return res.status(401).json({
-        message: "Unauthorized",
-        status: "fail",
-        error_type: "authentication",
-      });
-    }
+  const followers = await Follow.find({ to: idToLookup })
+    .sort({ createdAt: -1 })
+    .exec();
 
-    // Ensure user is authenticated
-    const user = await User.findOne({ userID: accountId, sessionID }).exec();
-    if (!user) {
-      return res.status(401).json({
-        message: "Unauthorized",
-        status: "fail",
-        error_type: "authentication",
-      });
-    }
+  const followersList = [];
 
-    const idToLookup = req.params.id;
-
-    const followers = await Follow.find({ to: idToLookup }).sort({ createdAt: -1 }).exec();
-
-    const followersList = [];
-
-    for (const follower of followers) {
-        const user = await User.findOne({ userID: follower.from }).exec();
-        followersList.push({
-            pk: user.userID,
-            pk_id: user.userID,
-            id: user.userID,
-            username: user.username,
-            full_name: user.fullname,
-            is_private: user.private,
-            fbid_v2: user.userID,
-            third_party_downloads_enabled: 0,
-            strong_id__: user.userID,
-            profile_pic_id: "3336601179441187388_62995714406",
-            profile_pic_url: user.profilePicture,
-            is_verified: user.verified,
-            has_anonymous_profile_picture: false,
-            account_badges: [],
-            latest_reel_media: 0,
-        });
-    }
-
-    res.json({
-        users: followersList,
-        has_more: true,
-        status: "ok"
+  for (const follower of followers) {
+    const user = await User.findOne({ userID: follower.from }).exec();
+    followersList.push({
+      pk: user.userID,
+      pk_id: user.userID,
+      id: user.userID,
+      username: user.username,
+      full_name: user.fullname,
+      is_private: user.private,
+      fbid_v2: user.userID,
+      third_party_downloads_enabled: 0,
+      strong_id__: user.userID,
+      profile_pic_id: "3336601179441187388_62995714406",
+      profile_pic_url: user.profilePicture,
+      is_verified: user.verified,
+      has_anonymous_profile_picture: false,
+      account_badges: [],
+      latest_reel_media: 0,
     });
+  }
+
+  res.json({
+    users: followersList,
+    has_more: true,
+    status: "ok",
+  });
 });
 
-router.get("/:id/following", async (req, res) => {
-    const accountId = req.cookies.ds_user_id;
-    const sessionID = req.cookies.sessionid;
+router.get("/:id/following", auth, async (req, res) => {
+  const idToLookup = req.params.id;
 
-    if (!accountId || !sessionID) {
-      return res.status(401).json({
-        message: "Unauthorized",
-        status: "fail",
-        error_type: "authentication",
-      });
-    }
+  const following = await Follow.find({ from: idToLookup })
+    .sort({ createdAt: -1 })
+    .exec();
 
-    // Ensure user is authenticated
-    const user = await User.findOne({ userID: accountId, sessionID }).exec();
-    if (!user) {
-      return res.status(401).json({
-        message: "Unauthorized",
-        status: "fail",
-        error_type: "authentication",
-      });
-    }
+  const followingList = [];
 
-    const idToLookup = req.params.id;
-
-    const following = await Follow.find({ from: idToLookup }).sort({ createdAt: -1 }).exec();
-
-    const followingList = [];
-
-    for (const followed of following) {
-        const user = await User.findOne({ userID: followed.to }).exec();
-        followingList.push({
-            pk: user.userID,
-            pk_id: user.userID,
-            id: user.userID,
-            username: user.username,
-            full_name: user.fullname,
-            is_private: user.private,
-            fbid_v2: user.userID,
-            third_party_downloads_enabled: 0,
-            strong_id__: user.userID,
-            profile_pic_id: "3336601179441187388_62995714406",
-            profile_pic_url: user.profilePicture,
-            is_verified: user.verified,
-            has_anonymous_profile_picture: false,
-            account_badges: [],
-            latest_reel_media: 0,
-        });
-    }
-
-    res.json({
-        users: followingList,
-        has_more: true,
-        status: "ok"
+  for (const followed of following) {
+    const user = await User.findOne({ userID: followed.to }).exec();
+    followingList.push({
+      pk: user.userID,
+      pk_id: user.userID,
+      id: user.userID,
+      username: user.username,
+      full_name: user.fullname,
+      is_private: user.private,
+      fbid_v2: user.userID,
+      third_party_downloads_enabled: 0,
+      strong_id__: user.userID,
+      profile_pic_id: "3336601179441187388_62995714406",
+      profile_pic_url: user.profilePicture,
+      is_verified: user.verified,
+      has_anonymous_profile_picture: false,
+      account_badges: [],
+      latest_reel_media: 0,
     });
+  }
+
+  res.json({
+    users: followingList,
+    has_more: true,
+    status: "ok",
+  });
 });
 
-router.all("/show_many", async (req, res) => {
+router.all("/show_many", auth, async (req, res) => {
   const accountId = req.cookies.ds_user_id;
-  const sessionID = req.cookies.sessionid;
 
-  if (!accountId || !sessionID) {
-    return res.status(401).json({
-      message: "Unauthorized",
-      status: "fail",
-      error_type: "authentication",
-    });
-  }
-
-  // Ensure user is authenticated
-  const user = await User.findOne({ userID: accountId, sessionID }).exec();
-  if (!user) {
-    return res.status(401).json({
-      message: "Unauthorized",
-      status: "fail",
-      error_type: "authentication",
-    });
-  }
-
-  let userIDs
+  let userIDs;
 
   if (!req.query.user_ids) {
     // get all the following of the authenticated user
@@ -400,30 +293,30 @@ router.all("/show_many", async (req, res) => {
   const friendshipStatuses = {};
 
   for (const id of userIDs) {
-      const follow = await Follow.findOne({
-          from: accountId,
-          to: id,
-      }).exec();
+    const follow = await Follow.findOne({
+      from: accountId,
+      to: id,
+    }).exec();
 
-      const followedBy = await Follow.findOne({
-          from: id,
-          to: accountId,
-      }).exec();
+    const followedBy = await Follow.findOne({
+      from: id,
+      to: accountId,
+    }).exec();
 
-      friendshipStatuses[id] = {
-          following: follow ? true : false,
-          incoming_request: false,
-          is_bestie: false,
-          is_private: false,
-          is_restricted: false,
-          outgoing_request: false,
-          is_feed_favorite: false,
-      };
+    friendshipStatuses[id] = {
+      following: follow ? true : false,
+      incoming_request: false,
+      is_bestie: false,
+      is_private: false,
+      is_restricted: false,
+      outgoing_request: false,
+      is_feed_favorite: false,
+    };
   }
 
   res.json({
-      friendship_statuses: friendshipStatuses,
-      status: "ok",
+    friendship_statuses: friendshipStatuses,
+    status: "ok",
   });
 });
 
