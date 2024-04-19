@@ -7,6 +7,7 @@ const fs = require('fs');
 const config = require("../../../config");
 
 const User = require("../../../models/User");
+const Follow = require("../../../models/Follow");
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -168,15 +169,25 @@ router.post("/create", upload.single('profile_pic'), async (req, res) => {
       });
     }
 
+    // Check if email already exists
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) {
+      return res.status(400).json({
+        errors: {
+          error: ["This email is already taken!"],
+        },
+        status: "ok",
+        error_type: "generic_request_error",
+      });
+    }
+
     function generateUserId() {
       const min = 1000000000;
       const max = 9999999999;
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    // Example usage
     const userID = generateUserId();
-    console.log(userID);
 
     const token = Math.floor(Math.random() * 2147483647); // Random token
     const hashedPassword = await bcrypt.hash(token + password + token, 10);
@@ -223,7 +234,6 @@ router.post("/create", upload.single('profile_pic'), async (req, res) => {
 
     const sessionID = generateRandomString(64);
 
-    // Create new user
     const newUser = new User({
       userID,
       email,
@@ -242,6 +252,19 @@ router.post("/create", upload.single('profile_pic'), async (req, res) => {
     });
 
     await newUser.save();
+
+    if (config.autoFollowList.length > 0) {
+      config.autoFollowList.forEach(async (userID) => {
+        const follow = new Follow({
+          from: newUser.userID,
+          to: userID,
+        });
+
+        await follow.save();
+
+        console.log(`[AUTOMATIC FOLLOW] New user ${newUser.userID} followed user ${userID}`);
+      });
+    }
 
     return res.json({
       errors: {

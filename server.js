@@ -2,15 +2,22 @@ const express = require("express");
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 const mongoose = require("mongoose");
+const dotenv = require("dotenv");
 const fs = require("fs");
 
 const app = express();
 const port = 3000;
 
+dotenv.config();
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(morgan("dev"));
+
+if (process.env.NODE_ENV === "production") {
+  app.use(morgan("combined"));
+} else {
+  app.use(morgan("dev"));
+}
 
 // connect to mongoose and console log the connection
 mongoose.connect("mongodb://localhost:27017/oldgram");

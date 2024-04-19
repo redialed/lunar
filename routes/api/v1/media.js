@@ -590,6 +590,9 @@ router.get("/:id/comments", auth, async (req, res) => {
       type: "comment",
     }).exec();
 
+    // count comment likes
+    const likes = await Like.find({ to: comment.id, type: "comment" }).exec();
+
     commentsList.push({
       pk: comment.id,
       user_id: commenter.userID,
@@ -624,7 +627,7 @@ router.get("/:id/comments", auth, async (req, res) => {
       is_covered: true,
       inline_composer_display_condition: "never",
       has_liked_comment: liked ? true : false,
-      comment_like_count: comment.likes,
+      comment_like_count: likes,
       preview_child_comments: [],
       child_comment_count: 0,
       other_preview_users: [],

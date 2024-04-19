@@ -3,6 +3,8 @@ const multer = require("multer");
 const router = express.Router();
 
 const User = require("../../../models/User");
+const Follow = require("../../../models/Follow");
+const Post = require("../../../models/Post");
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -65,6 +67,10 @@ router.get("/:id/info", auth, async (req, res) => {
       });
     }
 
+    const followers = await Follow.find({ to: id }).countDocuments();
+    const following = await Follow.find({ from: id }).countDocuments();
+    const posts = await Post.find({ uploadedBy: id }).countDocuments();
+
     const response = {
       user: {
         pk: user.userID,
@@ -79,9 +85,9 @@ router.get("/:id/info", auth, async (req, res) => {
         account_badges: [],
         has_anonymous_profile_picture: false,
         is_supervision_features_enabled: false,
-        follower_count: user.followerCount,
-        media_count: user.photoCount,
-        following_count: user.followingCount,
+        follower_count: followers,
+        media_count: posts,
+        following_count: following,
         following_tag_count: 0,
         geo_media_count: 0,
         can_use_affiliate_partnership_messaging_as_creator: false,
@@ -233,6 +239,10 @@ router.get("/:username/usernameinfo", auth, async (req, res) => {
 
   const user = await User.findOne({ username });
 
+  const followers = await Follow.find({ to: user.userID }).countDocuments();
+  const following = await Follow.find({ from: user.userID }).countDocuments();
+  const posts = await Post.find({ uploadedBy: user.userID }).countDocuments();
+
   if (user) {
     return res.json({
       user: {
@@ -248,9 +258,9 @@ router.get("/:username/usernameinfo", auth, async (req, res) => {
         account_badges: [],
         has_anonymous_profile_picture: false,
         is_supervision_features_enabled: false,
-        follower_count: user.followerCount,
-        media_count: user.photoCount,
-        following_count: user.followingCount,
+        follower_count: followers,
+        media_count: posts,
+        following_count: following,
         following_tag_count: 0,
         geo_media_count: 0,
         can_use_affiliate_partnership_messaging_as_creator: false,

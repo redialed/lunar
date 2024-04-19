@@ -6,6 +6,7 @@ const User = require("../../../models/User");
 const Post = require("../../../models/Post");
 const Follow = require("../../../models/Follow");
 const Like = require("../../../models/Like");
+const Comment = require("../../../models/Comment");
 
 const auth = require("../../../middleware/auth");
 
@@ -46,6 +47,9 @@ router.get("/user/:id", auth, async (req, res) => {
           to: post.postID,
         });
 
+        const likes = await Like.find({ to: post.postID, type: "post" }).countDocuments();
+        const comments = await Comment.find({ to: post.postID }).countDocuments();
+
         const item = {
           taken_at: Math.floor(post.postTimestamp.getTime() / 1000),
           pk: post.postPK,
@@ -75,7 +79,7 @@ router.get("/user/:id", auth, async (req, res) => {
           mezql_token: "",
           commenting_disabled_for_viewer: false,
           preview_comments: [],
-          comment_count: post.comments,
+          comment_count: comments,
           inline_composer_display_condition: "impression_trigger",
           inline_composer_imp_trigger_time: 5,
           is_comments_gif_composer_enabled: true,
@@ -87,7 +91,7 @@ router.get("/user/:id", auth, async (req, res) => {
           },
           has_hidden_comments: false,
           has_liked: hasLiked ? true : false,
-          like_count: post.likes,
+          like_count: likes,
           top_likers: [],
           clips_tab_pinned_user_ids: [],
           can_viewer_save: true,
@@ -317,6 +321,9 @@ router.post("/timeline", auth, async (req, res) => {
           to: post.postID,
         });
 
+        const likes = await Like.find({ to: post.postID, type: "post" }).countDocuments();
+        const comments = await Comment.find({ to: post.postID }).countDocuments();
+
         const item = {
           taken_at: Math.floor(post.postTimestamp.getTime() / 1000),
           pk: post.postPK,
@@ -346,7 +353,7 @@ router.post("/timeline", auth, async (req, res) => {
           mezql_token: "",
           commenting_disabled_for_viewer: false,
           preview_comments: [],
-          comment_count: post.comments,
+          comment_count: comments,
           inline_composer_display_condition: "impression_trigger",
           inline_composer_imp_trigger_time: 5,
           is_comments_gif_composer_enabled: true,
@@ -358,7 +365,7 @@ router.post("/timeline", auth, async (req, res) => {
           },
           has_hidden_comments: false,
           has_liked: hasLiked ? true : false,
-          like_count: post.likes,
+          like_count: likes,
           top_likers: [],
           clips_tab_pinned_user_ids: [],
           can_viewer_save: true,
@@ -575,6 +582,9 @@ router.get("/timeline", auth, async (req, res) => {
           to: post.postID,
         });
 
+        const likes = await Like.find({ to: post.postID, type: "post" }).countDocuments();
+        const comments = await Comment.find({ to: post.postID }).countDocuments();
+
         const item = {
           taken_at: Math.floor(post.postTimestamp.getTime() / 1000),
           pk: post.postPK,
@@ -604,7 +614,7 @@ router.get("/timeline", auth, async (req, res) => {
           mezql_token: "",
           commenting_disabled_for_viewer: false,
           preview_comments: [],
-          comment_count: post.comments,
+          comment_count: comments,
           inline_composer_display_condition: "impression_trigger",
           inline_composer_imp_trigger_time: 5,
           is_comments_gif_composer_enabled: true,
@@ -616,7 +626,7 @@ router.get("/timeline", auth, async (req, res) => {
           },
           has_hidden_comments: false,
           has_liked: hasLiked ? true : false,
-          like_count: post.likes,
+          like_count: likes,
           top_likers: [],
           clips_tab_pinned_user_ids: [],
           can_viewer_save: true,
@@ -832,6 +842,9 @@ router.get("/liked", auth, async (req, res) => {
           to: post.postID,
         });
 
+        const likes = await Like.find({ to: post.postID, type: "post" }).countDocuments();
+        const comments = await Comment.find({ to: post.postID }).countDocuments();
+
         const item = {
           taken_at: Math.floor(post.postTimestamp.getTime() / 1000),
           pk: post.postPK,
@@ -861,7 +874,7 @@ router.get("/liked", auth, async (req, res) => {
           mezql_token: "",
           commenting_disabled_for_viewer: false,
           preview_comments: [],
-          comment_count: post.comments,
+          comment_count: comments,
           inline_composer_display_condition: "impression_trigger",
           inline_composer_imp_trigger_time: 5,
           is_comments_gif_composer_enabled: true,
@@ -873,7 +886,7 @@ router.get("/liked", auth, async (req, res) => {
           },
           has_hidden_comments: false,
           has_liked: hasLiked ? true : false,
-          like_count: post.likes,
+          like_count: likes,
           top_likers: [],
           clips_tab_pinned_user_ids: [],
           can_viewer_save: true,
