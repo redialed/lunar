@@ -255,10 +255,17 @@ router.post("/create", upload.single('profile_pic'), async (req, res) => {
 
     if (config.autoFollowList.length > 0) {
       config.autoFollowList.forEach(async (userID) => {
+        // check if the user exists
+        const user = await User.findOne({ userID }).exec();
+        if (!user) return;
+
         const follow = new Follow({
           from: newUser.userID,
           to: userID,
         });
+
+        await User.updateOne({ userID }, { $inc: { followerCount: 1 } });
+        await User.updateOne({ userID: newUser.userID }, { $inc: { followingCount: 1 } });
 
         await follow.save();
 
