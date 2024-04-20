@@ -1,4 +1,5 @@
 const express = require("express");
+const sizeOf = require("image-size");
 const router = express.Router();
 
 const Post = require("../../../models/Post"); // Assuming your Post model is defined in a separate file
@@ -49,7 +50,7 @@ router.post("/configure", auth, async (req, res) => {
     res.json({
       media: {
         taken_at: Math.floor(post.postTimestamp.getTime() / 1000),
-        pk: post.postPK,
+        pk: parseInt(post.postPK),
         id: post.postID,
         hide_view_all_comment_entrypoint: false,
         is_visual_reply_commenter_notice_enabled: true,
@@ -290,6 +291,249 @@ router.post("/configure", auth, async (req, res) => {
         fb_aggregated_like_count: 0,
         fb_aggregated_comment_count: 0,
       },
+      status: "ok",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+router.get("/:id/info", auth, async (req, res) => {
+  try {
+    const { ds_user_id } = req.cookies;
+
+    const post = await Post.findOne({ postID: req.params.id }).exec();
+
+    if (!post) {
+      return res.status(404).json({
+        status: "fail",
+        error_type: "post_not_found",
+      });
+    }
+
+    const loggedInUser = await User.findOne({ userID: ds_user_id }).exec();
+
+    const user = await User.findOne({ userID: post.uploadedBy }).exec();
+
+    const dimensions = sizeOf(post.mediaURI);
+    const width = dimensions.width;
+    const height = dimensions.height;
+
+    // check if logged in user has liked the post
+    const hasLiked = await Like.findOne({
+      from: loggedInUser.userID,
+      to: post.postID,
+    });
+
+    const likes = await Like.find({
+      to: post.postID,
+      type: "post",
+    }).countDocuments();
+
+    const comments = await Comment.find({
+      to: post.postID,
+    }).countDocuments();
+
+    res.json({
+      num_results: 1,	
+      more_available: false,
+      items:[{
+        taken_at: Math.floor(post.postTimestamp.getTime() / 1000),
+        pk: parseInt(post.postPK),
+        id: post.postID,
+        hide_view_all_comment_entrypoint: false,
+        is_visual_reply_commenter_notice_enabled: true,
+        like_and_view_counts_disabled: false,
+        is_post_live_clips_media: false,
+        is_reshare_of_text_post_app_media_in_ig: false,
+        explore_hide_comments: false,
+        comment_threading_enabled: true,
+        is_unified_video: false,
+        has_privately_liked: false,
+        commerciality_status: "not_commercial",
+        filter_type: 0,
+        client_cache_key: "0",
+        integrity_review_decision: "pending",
+        device_timestamp: null,
+        caption_is_edited: false,
+        strong_id__: post.postID,
+        deleted_reason: 0,
+        has_shared_to_fb: 0,
+        should_request_ads: false,
+        has_delayed_metadata: false,
+        mezql_token: "",
+        preview_comments: [],
+        comment_count: comments,
+        inline_composer_display_condition: "impression_trigger",
+        is_comments_gif_composer_enabled: true,
+        comment_inform_treatment: {
+          should_have_inform_treatment: false,
+          text: "",
+          url: null,
+          action_type: null,
+        },
+        has_liked: hasLiked ? true : false,
+        like_count: likes,
+        facepile_top_likers: [],
+        top_likers: [],
+        clips_tab_pinned_user_ids: [],
+        can_viewer_save: true,
+        can_viewer_reshare: true,
+        shop_routing_user_id: null,
+        is_organic_product_tagging_eligible: true,
+        product_suggestions: [],
+        commerce_integrity_review_decision: "",
+        comments: [],
+        can_view_more_preview_comments: false,
+        has_more_comments: false,
+        max_num_visible_preview_comments: 2,
+        is_open_to_public_submission: false,
+        usertags: { in: [] },
+        photo_of_you: false,
+        can_see_insights_as_brand: false,
+        media_type: 1,
+        code: "code",
+        caption: post.description
+          ? {
+              bit_flags: 0,
+              created_at: Math.floor(post.createdAt.getTime() / 1000),
+              created_at_utc: Math.floor(post.createdAt.getTime() / 1000),
+              did_report_as_spam: false,
+              is_ranked_comment: false,
+              pk: post.postPK,
+              share_enabled: false,
+              content_type: "comment",
+              media_id: post.postPK,
+              status: "Active",
+              type: 1,
+              user_id: user.userID,
+              text: post.description,
+              user: {
+                fbid_v2: parseInt(user.userID),
+                feed_post_reshare_disabled: false,
+                full_name: user.fullname,
+                id: user.userID,
+                is_private: user.private,
+                is_unpublished: false,
+                pk: parseInt(user.userID),
+                pk_id: user.userID,
+                show_account_transparency_details: true,
+                strong_id__: user.userID,
+                third_party_downloads_enabled: 2,
+                username: user.username,
+                account_badges: [],
+                has_anonymous_profile_picture: false,
+                is_favorite: false,
+                is_verified: user.verified,
+                latest_reel_media: 0,
+                profile_pic_id: user.userID,
+                profile_pic_url: user.profilePicture,
+                transparency_product_enabled: false,
+              },
+              is_covered: false,
+              private_reply_status: 0,
+            }
+          : null,
+        sharing_friction_info: {
+          should_have_sharing_friction: false,
+          bloks_app_url: null,
+          sharing_friction_payload: null,
+        },
+        original_media_has_visual_reply_media: false,
+        fb_user_tags: {
+          in: [],
+        },
+        invited_coauthor_producers: [],
+        is_in_profile_grid: false,
+        profile_grid_control_enabled: false,
+        highlights_info: {
+          added_to: [],
+        },
+        user: {
+          fbid_v2: parseInt(user.userID),
+          feed_post_reshare_disabled: false,
+          full_name: user.fullname,
+          id: user.userID,
+          is_private: user.private,
+          is_unpublished: false,
+          pk: parseInt(user.userID),
+          pk_id: user.userID,
+          show_account_transparency_details: true,
+          strong_id__: user.userID,
+          third_party_downloads_enabled: 2,
+          username: user.username,
+          account_badges: [],
+          has_anonymous_profile_picture: false,
+          is_favorite: false,
+          is_verified: user.verified,
+          latest_reel_media: 0,
+          profile_pic_id: user.userID,
+          profile_pic_url: user.profilePicture,
+          transparency_product_enabled: false,
+        },
+        image_versions2: {
+          candidates: [
+            {
+              width: width,
+              height: height,
+              url: post.mediaURL,
+            },
+          ],
+        },
+        original_width: width,
+        original_height: height,
+        enable_media_notes_production: false,
+        product_type: "feed",
+        is_paid_partnership: false,
+        music_metadata: {
+          music_canonical_id: "0",
+          audio_type: null,
+          music_info: null,
+          original_sound_info: null,
+          pinned_media_ids: null,
+        },
+        social_context: [],
+        organic_tracking_token: "fucktracking",
+        ig_media_sharing_disabled: false,
+        boost_unavailable_identifier: null,
+        boost_unavailable_reason: null,
+        is_auto_created: false,
+        is_cutout_sticker_allowed: false,
+        is_reuse_allowed: false,
+        enable_waist: false,
+        owner: {
+          fbid_v2: parseInt(user.userID),
+          feed_post_reshare_disabled: false,
+          full_name: user.fullname,
+          id: user.userID,
+          is_private: user.private,
+          is_unpublished: false,
+          pk: parseInt(user.userID),
+          pk_id: user.userID,
+          show_account_transparency_details: true,
+          strong_id__: user.userID,
+          third_party_downloads_enabled: 2,
+          username: user.username,
+          account_badges: [],
+          has_anonymous_profile_picture: false,
+          is_favorite: false,
+          is_verified: user.verified,
+          latest_reel_media: 0,
+          profile_pic_id: user.userID,
+          profile_pic_url: user.profilePicture,
+          transparency_product_enabled: false,
+        },
+        fb_aggregated_like_count: 0,
+        fb_aggregated_comment_count: 0,
+        logging_info_token: null,
+        inventory_source: "media_or_ad",
+        is_seen: false,
+        is_eof: false,
+        ranking_weight: 0.0,
+        brs_severity: 70,
+      }],
+      auto_load_more_enabled: false,
       status: "ok",
     });
   } catch (err) {
@@ -590,7 +834,9 @@ router.get("/:id/comments", auth, async (req, res) => {
       type: "comment",
     }).exec();
 
-    const likes = await Like.find({ to: comment.id, type: "comment" }).countDocuments().exec();
+    const likes = await Like.find({ to: comment.id, type: "comment" })
+      .countDocuments()
+      .exec();
 
     commentsList.push({
       pk: comment.id,

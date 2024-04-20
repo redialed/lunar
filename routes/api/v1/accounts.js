@@ -80,7 +80,7 @@ router.post("/login", async (req, res) => {
           is_verified: user.verified,
           profile_pic_id: user.userID,
           profile_pic_url: user.profilePicture,
-          is_private: user.isaccountprivate,
+          is_private: user.private,
           pk_id: user.userID,
           full_name: user.fullname,
           account_badges: [],
