@@ -45,6 +45,7 @@ router.get("/user/:id", auth, async (req, res) => {
         const hasLiked = await Like.findOne({
           from: accountId,
           to: post.postID,
+          type: "post",
         });
 
         const likes = await Like.find({
@@ -314,6 +315,7 @@ router.post("/timeline", auth, async (req, res) => {
         const hasLiked = await Like.findOne({
           from: account.userID,
           to: post.postID,
+          type: "post",
         });
 
         const likes = await Like.find({
@@ -589,6 +591,7 @@ router.get("/timeline", auth, async (req, res) => {
         const hasLiked = await Like.findOne({
           from: account.userID,
           to: post.postID,
+          type: "post",
         });
 
         const likes = await Like.find({
@@ -843,7 +846,7 @@ router.get("/liked", auth, async (req, res) => {
 
     const fullArray = [];
 
-    const likes = await Like.find({ from: account.userID }).sort({
+    const likes = await Like.find({ from: account.userID, type: "post" }).sort({
       createdAt: -1,
     });
 
@@ -864,6 +867,7 @@ router.get("/liked", auth, async (req, res) => {
         const hasLiked = await Like.findOne({
           from: account.userID,
           to: post.postID,
+          type: "post",
         });
 
         const likes = await Like.find({

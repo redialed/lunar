@@ -324,6 +324,7 @@ router.get("/:id/info", auth, async (req, res) => {
     const hasLiked = await Like.findOne({
       from: loggedInUser.userID,
       to: post.postID,
+      type: "post",
     });
 
     const likes = await Like.find({
