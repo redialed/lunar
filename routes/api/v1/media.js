@@ -1059,6 +1059,10 @@ router.post("/:id/delete", auth, async (req, res) => {
       });
     }
 
+    const mediaURI = post.mediaURI;
+
+    fs.unlinkSync(mediaURI);
+
     await Like.deleteMany({ to: req.params.id, type: "post" });
     await Post.deleteOne({ postID: req.params.id });
     await User.updateOne({ userID: ds_user_id }, { $inc: { photoCount: -1 } });
