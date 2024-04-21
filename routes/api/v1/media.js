@@ -62,7 +62,7 @@ router.post("/configure", auth, async (req, res) => {
       }
     });
 
-    const mediaURL = `${config.host}photos/${user.userID}/${postID}.png`;
+    const mediaURL = `${config.host}public/photos/${user.userID}/${postID}.png`;
 
     const post = new Post({
       postPK,
