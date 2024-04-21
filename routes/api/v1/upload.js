@@ -42,50 +42,17 @@ router.post("/photo", upload.single("photo"), auth, async (req, res) => {
       return res.status(404).json({ message: "Account not found" });
     }
 
-    const postTimestamp = Date.now();
-    const description = null;
-    const isVideo = 0;
+    const newName = `public/photos/tmp/${account.userID}/${upload_id}_${uuid}.png`;
 
-    function generateId(length) {
-      const min = Math.pow(10, length - 1);
-      const max = Math.pow(10, length) - 1;
-      return Math.floor(Math.random() * (max - min + 1)) + min;
+    if (!fs.existsSync(`public/photos/tmp/${account.userID}`)) {
+      fs.mkdirSync(`public/photos/tmp/${account.userID}`, { recursive: true });
     }
-
-    const postPK = generateId(19);
-    console.log(postPK);
-
-    const postID = postPK + "_" + account.userID;
-
-    const newPost = new Post({
-      postPK,
-      postID,
-      uploadedBy: account.userID,
-      mediaURL: null,
-      mediaURI: null,
-      postTimestamp: postTimestamp,
-      description: description,
-      originalUploadID: originaluploadid,
-      originalUUID: uuid,
-      isVideo: isVideo,
-    });
-
-    await User.updateOne({ userID: ds_user_id }, { $inc: { photoCount: 1 } });
-
-    const photoURL = config.host + `public/photos/${account.userID}/${postID}.png`;
-    newPost.mediaURL = photoURL;
-    const photoURI = `public/photos/${account.userID}/${postID}.png`;
-    newPost.mediaURI = photoURI;
-
-    const newName = `public/photos/${account.userID}/${postID}.png`;
 
     if (!fs.existsSync(`public/photos/${account.userID}`)) {
       fs.mkdirSync(`public/photos/${account.userID}`, { recursive: true });
     }
 
     await sharp(req.file.buffer).png().toFile(newName);
-
-    await newPost.save();
 
     res.json({ status: "ok" });
   } catch (err) {
