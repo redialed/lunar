@@ -342,16 +342,16 @@ router.post("/:id/edit_media", auth, async (req, res) => {
       sessionID: sessionid,
     }).exec();
 
-    const post = await Post.findOne({ postID: req.params.id }).exec();
+    const postToUpdate = await Post.findOne({ postID: req.params.id }).exec();
 
-    if (!post) {
+    if (!postToUpdate) {
       return res.status(404).json({
         status: "fail",
         error_type: "post_not_found",
       });
     }
 
-    if (post.uploadedBy !== user.userID) {
+    if (postToUpdate.uploadedBy !== user.userID) {
       return res.status(403).json({
         status: "fail",
         error_type: "not_owner",
@@ -378,6 +378,8 @@ router.post("/:id/edit_media", auth, async (req, res) => {
     }
 
     await Post.updateOne({ postID: req.params.id }, { description: caption });
+
+    const post = await Post.findOne({ postID: req.params.id }).exec();
 
     res.json({
       num_results: 1,
