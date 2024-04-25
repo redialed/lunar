@@ -6,6 +6,8 @@ Lunar is a recreation of the old Instagram API to revive old versions of the app
 This code is a mess and I do apologize about that, I am still not an expert at writing backend code :/
 
 If you need help setting this up or making it work with your phone, add me on Discord (ppvris) or DM me on [Telegram](https://t.me/xpvris)
+
+Lunar is not affiliated with Instagram/Meta in any way, this project is for education purposes to revive older versions of the application.
  
 ## Compatibility
 
