@@ -7,7 +7,7 @@ const fs = require("fs");
 
 const config = require("../../../config");
 
-const Post = require("../../../models/Post"); // Assuming your Post model is defined in a separate file
+const Post = require("../../../models/Post");
 const User = require("../../../models/User");
 
 const storage = multer.memoryStorage();

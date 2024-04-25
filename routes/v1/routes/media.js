@@ -4,7 +4,7 @@ const fs = require("fs");
 const router = express.Router();
 const config = require("../../../config");
 
-const Post = require("../../../models/Post"); // Assuming your Post model is defined in a separate file
+const Post = require("../../../models/Post");
 const User = require("../../../models/User");
 const Like = require("../../../models/Like");
 const Follow = require("../../../models/Follow");

@@ -54,6 +54,16 @@ To run this project, you will need to add the following environment variables to
 `MONGO_USER`
 
 `MONGO_PASS`
+
+
+## Configuration
+
+`host` is used to make sure we get the right host link everywhere in the code where it needs it
+
+`autoFollowList` is an arraay of user ID's that will be automatically followed everytime someone makes a new account
+
+`reservedUsernames` are usernames that can't be taken when registering an account, even if an account with that username doesn't exist
+
 ## Author & Contributors
 
 **Author:**
