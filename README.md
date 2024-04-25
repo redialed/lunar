@@ -5,6 +5,13 @@ Lunar is a recreation of the old Instagram API to revive old versions of the app
 
 This code is a mess and I do apologize about that, I am still not an expert at writing backend code :/
 
+## Compatibility
+
+**Android:** from 7.17.0 to 10.3.2
+
+**Windows Phone:** 6tag: kinda works?, Instagram Beta: crashes very often
+
+**iOS:** Untested
 ## Install
 
 *Make sure to have MongoDB on your computer/server first then follow these steps:*
