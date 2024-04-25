@@ -15,7 +15,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.set('trust proxy', 2);
 
-if (process.env.NODE_ENV === "production") {
+if (process.env.NODE_ENV === "prod" || process.env.NODE_ENV === "production") {
   app.use(morgan("combined"));
 } else {
   app.use(morgan("dev"));
