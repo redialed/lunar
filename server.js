@@ -4,7 +4,6 @@ const morgan = require("morgan");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const fs = require("fs");
-const config = require("./config.json");
 
 const app = express();
 const port = 3000;
@@ -13,7 +12,7 @@ dotenv.config();
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.set('trust proxy', 2);
+app.set("trust proxy", 2);
 
 if (process.env.NODE_ENV === "prod" || process.env.NODE_ENV === "production") {
   app.use(morgan("combined"));
