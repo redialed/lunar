@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const v1 = require("./api/v1");
+const v1 = require("./v1");
 const config = require("../config.json");
 
 const auth = require("../middleware/auth");
