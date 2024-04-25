@@ -45,9 +45,15 @@ To run this project, you will need to add the following environment variables to
 `MONGO_USER`
 
 `MONGO_PASS`
-## Authors
+## Author & Contributors
+
+**Author:**
 
 - [@lvuu](https://www.github.com/lvuu)
+
+**Contributors:**
+
+- None yet, contributions are always welcome!
 
 ## Credits
 
