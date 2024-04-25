@@ -21,7 +21,7 @@ If you need help setting this up or making it work with your phone, add me on Di
 Clone the project
 
 ```bash
-  git clone https://github.com/lvuu/lunar.git
+  git clone https://github.com/dialedup/lunar.git
 ```
 
 Go to the project directory
