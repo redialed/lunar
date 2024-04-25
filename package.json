@@ -13,18 +13,18 @@
   "scripts": {
     "start": "node server.js"
   },
-  "name": "oldgramapi",
+  "name": "lunar",
   "version": "1.0.0",
   "description": "Remake of the old Instagram API.",
   "main": "server.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lvuu/OldgramAPI.git"
+    "url": "git+https://github.com/lvuu/lunar.git"
   },
   "author": "lvuu on GitHub",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/lvuu/OldgramAPI/issues"
+    "url": "https://github.com/lvuu/lunar/issues"
   },
-  "homepage": "https://github.com/lvuu/OldgramAPI#readme"
+  "homepage": "https://github.com/lvuu/lunar#readme"
 }
