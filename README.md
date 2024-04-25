@@ -64,4 +64,4 @@ To run this project, you will need to add the following environment variables to
 
 ## Credits
 
-- Some of the code was taken and rewrote in node from [@Savefade](https://www.github.com/Savefade)'s [LegacyIGN](https://github.com/Savefade/LegacyIGN) PHP code.
+- Some of the code was taken and rewritten in Node from [@Savefade](https://www.github.com/Savefade)'s [LegacyIGN](https://github.com/Savefade/LegacyIGN) PHP code.
