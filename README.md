@@ -3,7 +3,7 @@
 
 Lunar is a recreation of the old Instagram API to revive old versions of the app, it functions on a custom server that isn't linked in any way to the official Instagram servers.
 
-This code is a mess and I am planning on rewriting it at some point, contributions are welcomed tho.
+This code is a mess and I do apologize about that, I am still not an expert at writing backend code :/
 
 ## Install
 
