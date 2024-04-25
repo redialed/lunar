@@ -19,12 +19,12 @@
   "main": "server.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lvuu/lunar.git"
+    "url": "git+https://github.com/dialedup/lunar.git"
   },
-  "author": "lvuu on GitHub",
+  "author": "Dialed Up",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/lvuu/lunar/issues"
+    "url": "https://github.com/dialedup/lunar/issues"
   },
-  "homepage": "https://github.com/lvuu/lunar#readme"
+  "homepage": "https://github.com/dialedup/lunar#readme"
 }
