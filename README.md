@@ -7,7 +7,7 @@ This code is a mess and I do apologize about that, I am still not an expert at w
 
 If you need help setting this up or making it work with your phone, add me on Discord (ppvris) or DM me on [Telegram](https://t.me/xpvris)
 
-Lunar is not affiliated with Instagram/Meta in any way, this project is for education purposes to revive older versions of the application.
+Lunar is not affiliated with Instagram/Meta in any way, this project is for educational purposes to revive older versions of the application.
  
 ## Compatibility
 
