@@ -32,7 +32,7 @@ router.post("/configure", auth, async (req, res) => {
       const decodedjson = JSON.parse(sentjson);
       upload_id = decodedjson.upload_id || decodedjson.device_timestamp;
       device_timestamp = decodedjson.device_timestamp;
-      uuid = decodedjson._uuid;
+      uuid = decodedjson._uuid || null;
       caption = decodedjson.caption || null;
     } else {
       upload_id = device_timestamp;

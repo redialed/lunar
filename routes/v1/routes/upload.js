@@ -20,7 +20,7 @@ router.post("/photo", upload.single("photo"), auth, async (req, res) => {
     const { ds_user_id, sessionid } = req.cookies;
 
     const upload_id = req.body.upload_id;
-    const uuid = req.body._uuid;
+    const uuid = req.body._uuid || null;
 
     let originaluploadid = upload_id;
 
