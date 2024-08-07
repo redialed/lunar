@@ -17,7 +17,7 @@ Lunar is not affiliated with Instagram/Meta in any way, this project is for educ
 
 **Windows 10 Desktop (UWP):** Untested, and UWP version of Instagram for Windows is lost media, only PWA (web app) can be downloaded due to MS Store not serving old versions.
 
-**iOS:** Untested
+**iOS:** Crashes immediately after logging in
 
 **watchOS:** Untested, lost?
 ## Install
