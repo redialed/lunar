@@ -6,7 +6,7 @@ const dotenv = require("dotenv");
 const fs = require("fs");
 
 const app = express();
-const port = 3000;
+const port = 300;
 
 dotenv.config();
 app.use(cookieParser());

@@ -11,6 +11,7 @@
     "sharp": "^0.33.3"
   },
   "scripts": {
+    "dev": "nodemon server.js",
     "start": "node server.js"
   },
   "name": "lunar",

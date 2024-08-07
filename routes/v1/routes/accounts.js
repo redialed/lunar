@@ -14,7 +14,7 @@ const upload = multer({ storage: storage });
 
 const auth = require("../../../middleware/auth");
 
-router.post("/login", async (req, res) => {
+router.post("/login", upload.none(), async (req, res) => {
   const signedBody = req.body.signed_body;
 
   let username, password;
