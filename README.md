@@ -19,7 +19,10 @@ Lunar is not affiliated with Instagram/Meta in any way, this project is for educ
 
 **iOS:** Crashes immediately after logging in
 
-**watchOS:** Untested, lost?
+**watchOS:** Untested, part of certain iOS IG clients
+
+**Tizen:** Untested, all versions of the client are lost media
+
 ## Install
 
 *Make sure to have MongoDB on your computer/server first then follow these steps:*
