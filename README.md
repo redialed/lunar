@@ -77,7 +77,7 @@ To run this project, you will need to add the following environment variables to
 
 **Author:**
 
-- [@lvuu](https://www.github.com/lvuu)
+- [@usb08](https://www.github.com/usb08)
 
 - with the help of GitHub Copilot (as i said i AM a beginner so copilot helped <3)
 
