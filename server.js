@@ -4,6 +4,7 @@ const morgan = require("morgan");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const fs = require("fs");
+const lusca = require("lusca");
 
 const app = express();
 const port = 300;
@@ -12,6 +13,7 @@ dotenv.config();
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(lusca.csrf());
 app.set("trust proxy", 2);
 
 if (process.env.NODE_ENV === "prod" || process.env.NODE_ENV === "production") {
